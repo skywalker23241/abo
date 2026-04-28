@@ -25,7 +25,7 @@ export const { getStaticPaths, GET } = OGImageRoute({
       [34, 38, 45]
     ],
     bgImage: {
-      path: 'public/og/yukiaim-og-bg.jpg',
+      path: 'public/og/og-bg.jpg',
       fit: 'fill'
     },
     padding: 150,
