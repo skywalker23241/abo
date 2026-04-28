@@ -2,7 +2,7 @@
 
 - I’m working on SEO & Web Site Development (Study).
 - Currently learning Astro & SEO Strategy.
-- I write blogs at [Bo](http://jackcooper.qzz.io/)
+- I write blogs at [雫](http://jackcooper.qzz.io/)
   
   [![Netlify Status](https://api.netlify.com/api/v1/badges/795b04bd-4bea-448a-b58c-e76690049fb3/deploy-status)](https://app.netlify.com/projects/cooper2/deploys)
 
