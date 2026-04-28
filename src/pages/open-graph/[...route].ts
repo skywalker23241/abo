@@ -1,6 +1,5 @@
 import { getCollection } from 'astro:content'
 import { OGImageRoute } from 'astro-og-canvas'
-import { themeConfig } from '../../config'
 
 const collectionEntries = await getCollection('posts')
 
@@ -16,27 +15,32 @@ export const { getStaticPaths, GET } = OGImageRoute({
   pages,
   getImageOptions: (_path, page) => ({
     title: page.title,
-    description: themeConfig.site.title,
+    description: '',
     logo: {
-      path: 'public/og/og-logo.png',
-      size: [80, 80]
+      path: 'public/og/og-logo-white.png',
+      size: [64, 64]
     },
-    bgGradient: [[255, 255, 255]],
+    bgGradient: [
+      [16, 19, 26],
+      [34, 38, 45]
+    ],
     bgImage: {
-      path: 'public/og/og-bg.png',
+      path: 'public/og/yukiaim-og-bg.jpg',
       fit: 'fill'
     },
-    padding: 64,
+    padding: 150,
     font: {
       title: {
-        color: [28, 28, 28],
-        size: 68,
+        color: [248, 250, 252],
+        size: 58,
+        lineHeight: 1.08,
         weight: 'SemiBold',
         families: ['Inter Variable', 'Besley', 'Alan Sans', 'Maple Mono CN']
       },
       description: {
-        color: [180, 180, 180],
-        size: 40,
+        color: [218, 224, 230],
+        size: 30,
+        lineHeight: 1.25,
         weight: 'Medium',
         families: ['Inter Variable', 'Besley', 'Alan Sans', 'Maple Mono CN']
       }
