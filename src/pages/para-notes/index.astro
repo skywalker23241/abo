@@ -1,0 +1,370 @@
+---
+import IndexLayout from '@/layouts/IndexLayout.astro'
+import NoteTree from '@/components/widgets/NoteTree.astro'
+import {
+  getAllNotes,
+  getNoteTree,
+  paraCategories,
+  paraCategoryDescriptions,
+  paraCategoryLabels
+} from '@/utils/para-notes'
+
+const totalCount = getAllNotes().length
+const trees = paraCategories.map((cat) => ({
+  cat,
+  label: paraCategoryLabels[cat],
+  description: paraCategoryDescriptions[cat],
+  nodes: getNoteTree(cat)
+}))
+---
+
+<IndexLayout title="PARA 笔记" description="使用 PARA 方法组织的个人笔记">
+  <div class="notes-shell">
+    <aside class="notes-sidebar">
+      <header class="sidebar-header">
+        <h1>PARA 笔记</h1>
+        <p class="sidebar-meta">
+          <strong>{totalCount}</strong> 篇 · 按文件夹归类
+        </p>
+      </header>
+
+      <nav class="sidebar-tree" aria-label="笔记目录">
+        {
+          trees.map(({ cat, label, description, nodes }) =>
+            nodes.length === 0 ? null : (
+              <details class="cat-section" open={cat === 'Project'}>
+                <summary class="cat-row">
+                  <span class="cat-name">{label}</span>
+                  <span class="cat-badge">{cat}</span>
+                </summary>
+                <p class="cat-desc">{description}</p>
+                <NoteTree nodes={nodes} level={0} />
+              </details>
+            )
+          )
+        }
+      </nav>
+    </aside>
+
+    <article class="notes-content prose" id="note-content" data-empty="true">
+      <div class="empty-state">
+        <p>← 从左侧选择一篇笔记开始阅读</p>
+      </div>
+    </article>
+  </div>
+</IndexLayout>
+
+<style>
+  .notes-shell {
+    display: grid;
+    grid-template-columns: minmax(220px, 280px) 1fr;
+    gap: 2.25rem;
+    align-items: flex-start;
+  }
+
+  .notes-sidebar {
+    position: sticky;
+    top: 1.5rem;
+    max-height: calc(100vh - 3rem);
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: 0.25rem;
+  }
+
+  .sidebar-header {
+    margin-bottom: 1rem;
+  }
+
+  .sidebar-header h1 {
+    margin: 0 0 0.35rem 0;
+    font-size: 1.25rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--text-primary);
+  }
+
+  .sidebar-meta {
+    margin: 0;
+    font-size: 0.72rem;
+    color: var(--text-tertiary);
+    font-family: var(--mono);
+  }
+
+  .sidebar-meta strong {
+    color: var(--text-secondary);
+    font-weight: 600;
+  }
+
+  .sidebar-tree {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .cat-section > summary {
+    list-style: none;
+    cursor: pointer;
+    user-select: none;
+  }
+  .cat-section > summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .cat-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.4rem 0.4rem;
+    border-radius: 0.3rem;
+    transition: background-color 0.15s ease-out;
+  }
+
+  .cat-row::before {
+    content: '▶';
+    font-size: 0.6rem;
+    color: var(--text-tertiary);
+    transition: transform 0.15s ease-out;
+    flex-shrink: 0;
+    width: 0.7rem;
+    line-height: 1;
+  }
+
+  .cat-section[open] > .cat-row::before {
+    transform: rotate(90deg);
+  }
+
+  .cat-row:hover {
+    background-color: var(--selection);
+  }
+
+  .cat-name {
+    flex: 1;
+    min-width: 0;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  .cat-badge {
+    flex-shrink: 0;
+    font-size: 0.6rem;
+    font-weight: 500;
+    color: var(--text-tertiary);
+    background: var(--code-bg);
+    padding: 0.1rem 0.4rem;
+    border-radius: 0.3rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-family: var(--mono);
+  }
+
+  .cat-desc {
+    margin: 0.1rem 0 0.4rem 1.55rem;
+    font-size: 0.7rem;
+    color: var(--text-tertiary);
+    line-height: 1.45;
+  }
+
+  /* Content area */
+  .notes-content {
+    min-width: 0;
+    margin-top: 0;
+  }
+
+  .notes-content[data-empty='true'] .empty-state {
+    color: var(--text-tertiary);
+    font-size: 0.85rem;
+    padding: 3rem 0.5rem;
+    text-align: left;
+    font-style: italic;
+  }
+
+  .notes-content :global(.note-header) {
+    margin-bottom: 2rem;
+  }
+
+  .notes-content :global(.note-header h1) {
+    margin: 0 0 0.6rem 0;
+    font-size: 1.6rem;
+    font-weight: 700;
+    line-height: 1.25;
+    letter-spacing: -0.02em;
+    color: var(--text-primary);
+  }
+
+  .notes-content :global(.category-badge) {
+    font-size: 0.65rem;
+    font-weight: 500;
+    color: var(--text-tertiary);
+    background: var(--code-bg);
+    padding: 0.15rem 0.45rem;
+    border-radius: 0.3rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-family: var(--mono);
+  }
+
+  .notes-content :global(img) {
+    max-width: 100%;
+    height: auto;
+    border-radius: 0.4rem;
+    margin: 0.5rem 0;
+  }
+
+  .notes-content :global(.loading),
+  .notes-content :global(.error) {
+    color: var(--text-tertiary);
+    font-size: 0.85rem;
+    padding: 2rem 0.5rem;
+    font-style: italic;
+  }
+
+  .notes-content :global(.error) {
+    color: #c53030;
+  }
+
+  /* Mobile: stack vertically */
+  @media (max-width: 768px) {
+    .notes-shell {
+      grid-template-columns: 1fr;
+      gap: 1.25rem;
+    }
+
+    .notes-sidebar {
+      position: static;
+      max-height: 50vh;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 1rem;
+    }
+
+    .sidebar-header h1 {
+      font-size: 1.4rem;
+    }
+
+    .notes-content :global(.note-header h1) {
+      font-size: 1.4rem;
+    }
+  }
+</style>
+
+<script>
+  type NoteData = { id: string; title: string; categoryLabel: string; html: string }
+
+  function setupNotesShell() {
+    const contentEl = document.getElementById('note-content')
+    if (!contentEl) return
+
+    const cache = new Map<string, NoteData>()
+    let activeId: string | null = null
+
+    function escapeHtml(s: string): string {
+      return s
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;')
+    }
+
+    function expandAncestors(id: string) {
+      const btn = document.querySelector<HTMLButtonElement>(
+        `.note-row[data-id="${CSS.escape(id)}"]`
+      )
+      if (!btn) return
+      let el: HTMLElement | null = btn
+      while (el) {
+        if (el.tagName === 'DETAILS') {
+          ;(el as HTMLDetailsElement).open = true
+        }
+        el = el.parentElement
+      }
+      // Bring active row into view inside the sidebar (without page jump)
+      btn.scrollIntoView({ block: 'nearest' })
+    }
+
+    function highlight(id: string) {
+      document.querySelectorAll('.note-row.active').forEach((el) => el.classList.remove('active'))
+      const btn = document.querySelector<HTMLButtonElement>(
+        `.note-row[data-id="${CSS.escape(id)}"]`
+      )
+      if (btn) btn.classList.add('active')
+    }
+
+    async function loadNote(id: string) {
+      activeId = id
+      contentEl.dataset.empty = 'false'
+
+      if (!cache.has(id)) {
+        contentEl.innerHTML = '<p class="loading">加载中…</p>'
+        try {
+          const res = await fetch(`/para-notes/${encodeURI(id)}.json`)
+          if (!res.ok) throw new Error(`HTTP ${res.status}`)
+          const data = await res.json()
+          cache.set(id, data)
+        } catch (err) {
+          contentEl.innerHTML = `<p class="error">加载失败：${escapeHtml(String(err))}</p>`
+          return
+        }
+      }
+      // If user clicked another note while this was fetching, drop the result.
+      if (activeId !== id) return
+
+      const { title, categoryLabel, html } = cache.get(id)!
+      contentEl.innerHTML = `
+        <header class="note-header">
+          <h1>${escapeHtml(title)}</h1>
+          <span class="category-badge">${escapeHtml(categoryLabel)}</span>
+        </header>
+        ${html}
+      `
+      highlight(id)
+      expandAncestors(id)
+    }
+
+    function loadFromHash() {
+      const raw = location.hash.slice(1)
+      if (!raw) return
+      try {
+        const id = decodeURIComponent(raw)
+        loadNote(id)
+      } catch {
+        /* malformed hash */
+      }
+    }
+
+    function onClick(e: Event) {
+      const target = e.target as HTMLElement
+      const btn = target.closest<HTMLButtonElement>('.note-row')
+      if (!btn) return
+      const id = btn.dataset.id
+      if (!id) return
+      const newHash = '#' + encodeURIComponent(id)
+      if (location.hash !== newHash) {
+        history.pushState({ id }, '', newHash)
+      }
+      loadNote(id)
+    }
+
+    function onPopstate() {
+      loadFromHash()
+    }
+
+    document.addEventListener('click', onClick)
+    window.addEventListener('popstate', onPopstate)
+
+    // Initial load if a hash is present
+    loadFromHash()
+
+    // Cleanup on view transitions
+    document.addEventListener(
+      'astro:before-swap',
+      () => {
+        document.removeEventListener('click', onClick)
+        window.removeEventListener('popstate', onPopstate)
+      },
+      { once: true }
+    )
+  }
+
+  document.addEventListener('astro:page-load', setupNotesShell)
+</script>

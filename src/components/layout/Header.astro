@@ -1,4 +1,6 @@
 ---
+import List from 'phosphor-astro/List.astro'
+import X from 'phosphor-astro/X.astro'
 import ThemeToggle from '@/components/ui/ThemeToggle.astro'
 
 const navLinks = [
@@ -6,7 +8,8 @@ const navLinks = [
   { href: '/categories', label: '分类' },
   { href: '/now', label: '现在' },
   { href: '/nav', label: '书签' },
-  { href: '/newsletter', label: '订阅' }
+  { href: '/newsletter', label: '订阅' },
+  { href: '/para-notes', label: '笔记' }
 ]
 
 const currentPath = Astro.url.pathname
@@ -14,7 +17,17 @@ const currentPath = Astro.url.pathname
 
 <header class="site-header">
   <nav class="site-nav" aria-label="Primary">
-    <div class="nav-links">
+    <button
+      type="button"
+      class="nav-toggle"
+      aria-label="切换菜单"
+      aria-expanded="false"
+      aria-controls="primary-nav-links"
+    >
+      <List class="icon-open" width={20} height={20} />
+      <X class="icon-close" width={20} height={20} />
+    </button>
+    <div id="primary-nav-links" class="nav-links" data-open="false">
       {
         navLinks.map(({ href, label }) => {
           const isActive = href === '/' ? currentPath === '/' : currentPath.startsWith(href)
@@ -86,13 +99,111 @@ const currentPath = Astro.url.pathname
     color: var(--text-primary);
   }
 
-  @media (max-width: 520px) {
+  .nav-toggle {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    background: transparent;
+    border: 0;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: color 0.15s ease-out;
+  }
+
+  .nav-toggle:hover {
+    color: var(--text-primary);
+  }
+
+  .nav-toggle .icon-close {
+    display: none;
+  }
+
+  .nav-toggle[aria-expanded='true'] .icon-open {
+    display: none;
+  }
+
+  .nav-toggle[aria-expanded='true'] .icon-close {
+    display: inline-flex;
+  }
+
+  @media (max-width: 768px) {
     .site-header {
       margin-bottom: 1.75rem;
     }
 
+    .site-nav {
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .nav-toggle {
+      display: inline-flex;
+      order: 1;
+    }
+
+    .site-nav :global(astro-theme-toggle) {
+      order: 2;
+    }
+
     .nav-links {
-      gap: 0.9rem;
+      order: 3;
+      flex-basis: 100%;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.6rem;
+      max-height: 0;
+      opacity: 0;
+      overflow: hidden;
+      padding-top: 0;
+      border-top: 1px solid transparent;
+      transition:
+        max-height 0.2s ease-out,
+        opacity 0.15s ease-out,
+        padding-top 0.2s ease-out,
+        border-top-color 0.2s ease-out;
+    }
+
+    .nav-links[data-open='true'] {
+      max-height: 24rem;
+      opacity: 1;
+      padding-top: 0.75rem;
+      border-top-color: var(--border);
     }
   }
 </style>
+
+<script>
+  function setupHeaderNav() {
+    const toggle = document.querySelector<HTMLButtonElement>('.nav-toggle')
+    const links = document.getElementById('primary-nav-links')
+    if (!toggle || !links) return
+
+    const setOpen = (open: boolean) => {
+      toggle.setAttribute('aria-expanded', String(open))
+      links.setAttribute('data-open', String(open))
+    }
+
+    toggle.addEventListener('click', () => {
+      setOpen(toggle.getAttribute('aria-expanded') !== 'true')
+    })
+
+    links.querySelectorAll('a').forEach((a) => {
+      a.addEventListener('click', () => setOpen(false))
+    })
+
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false)
+    }
+    document.addEventListener('keydown', onKey)
+    document.addEventListener(
+      'astro:before-swap',
+      () => document.removeEventListener('keydown', onKey),
+      { once: true }
+    )
+  }
+
+  document.addEventListener('astro:page-load', setupHeaderNav)
+</script>

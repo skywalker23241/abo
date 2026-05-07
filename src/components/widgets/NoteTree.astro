@@ -1,0 +1,152 @@
+---
+import type { NoteTreeNode } from '@/utils/para-notes'
+
+interface Props {
+  nodes: NoteTreeNode[]
+  level?: number
+}
+
+const { nodes, level = 0 } = Astro.props
+---
+
+<ul class="note-tree" data-level={level}>
+  {
+    nodes.map((node) =>
+      node.kind === 'folder' ? (
+        <li class="tree-folder">
+          <details>
+            <summary class="folder-row">
+              <span class="folder-name">{node.name}</span>
+              <span class="folder-count">{node.count}</span>
+            </summary>
+            <Astro.self nodes={node.children} level={level + 1} />
+          </details>
+        </li>
+      ) : (
+        <li class="tree-leaf">
+          <button type="button" class="note-row" data-id={node.id} title={node.title}>
+            <span class="note-title">{node.title}</span>
+          </button>
+        </li>
+      )
+    )
+  }
+</ul>
+
+<style>
+  .note-tree {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.05rem;
+  }
+
+  /* Indent every nested level (relative to its parent <details>) */
+  .note-tree[data-level='0'] > li > details > .note-tree,
+  .note-tree[data-level='0'] > li > details > * .note-tree {
+    /* nothing extra; nested via padding-left on .note-tree below */
+  }
+
+  .note-tree :global(.note-tree) {
+    padding-left: 0.85rem;
+    border-left: 1px dashed var(--border);
+    margin-left: 0.45rem;
+    margin-top: 0.1rem;
+  }
+
+  .tree-folder > details > summary {
+    list-style: none;
+    cursor: pointer;
+    user-select: none;
+  }
+  .tree-folder > details > summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .folder-row {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.3rem 0.4rem;
+    border-radius: 0.3rem;
+    color: var(--text-secondary);
+    font-size: 0.82rem;
+    transition: background-color 0.15s ease-out;
+  }
+
+  .folder-row::before {
+    content: '▶';
+    font-size: 0.55rem;
+    color: var(--text-tertiary);
+    transition: transform 0.15s ease-out;
+    flex-shrink: 0;
+    width: 0.6rem;
+    line-height: 1;
+  }
+
+  details[open] > .folder-row::before {
+    transform: rotate(90deg);
+  }
+
+  .folder-row:hover {
+    background-color: var(--selection);
+    color: var(--text-primary);
+  }
+
+  .folder-name {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: 500;
+  }
+
+  .folder-count {
+    flex-shrink: 0;
+    font-size: 0.7rem;
+    color: var(--text-tertiary);
+    font-family: var(--mono);
+  }
+
+  .tree-leaf {
+    margin: 0;
+  }
+
+  .note-row {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: transparent;
+    border: 0;
+    padding: 0.3rem 0.4rem 0.3rem 1rem;
+    border-radius: 0.3rem;
+    cursor: pointer;
+    color: var(--text-primary);
+    font-size: 0.82rem;
+    line-height: 1.4;
+    font-family: inherit;
+    transition:
+      color 0.15s ease-out,
+      background-color 0.15s ease-out;
+  }
+
+  .note-row:hover {
+    background-color: var(--selection);
+  }
+
+  .note-row.active {
+    background-color: var(--selection);
+    color: var(--text-primary);
+    font-weight: 600;
+  }
+
+  .note-title {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+</style>

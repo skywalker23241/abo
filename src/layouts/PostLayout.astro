@@ -104,13 +104,17 @@ const headingHtml = displayTitle ? md.renderInline(displayTitle) : title
   }
 
   .post-meta {
-    display: flex;
+    display: inline-flex;
     align-items: center;
     gap: 0.6rem;
-    color: var(--text-tertiary);
-    font-size: 0.875rem;
-    font-family: var(--mono);
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    font-family: var(--serif);
+    font-style: italic;
     letter-spacing: 0;
+    background-color: var(--code-bg);
+    border-radius: 3px;
+    padding: 0.15rem 0.65rem;
   }
 
   .meta-sep {
