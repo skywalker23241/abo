@@ -7,8 +7,9 @@ import MaskSad from 'phosphor-astro/MaskSad.astro'
 import SealCheck from 'phosphor-astro/SealCheck.astro'
 import Cheers from 'phosphor-astro/Cheers.astro'
 import Translate from 'phosphor-astro/Translate.astro'
+import Card from '@/components/Card.astro'
 
-<Card client:load>
+<Card>
   <p>
     Howdy Amigo! <MaskHappy width={20} height={20} />
   </p>
@@ -20,34 +21,21 @@ import Translate from 'phosphor-astro/Translate.astro'
   </p>
 </Card>
 
-import Card from '@/components/Card.tsx'
-
-<Card client:load>
+<Card>
 
 > <MaskSad width={20} height={20} /> [**Panem et
 > circenses**](https://en.wikipedia.org/wiki/Bread_and_circuses)
 
-<div style={{ textAlign: 'right' }}><cite>— Juvenal, Satire 10.77–81</cite></div>
-<div style={{ textAlign: 'center' }}>
+<div style="text-align: right"><cite>— Juvenal, Satire 10.77–81</cite></div>
+<div style="text-align: center">
 
 <sup>
   <Translate width={20} height={20} />
 </sup>
-<span className="blurred">
-  <sup>“给他们面包和马戏，他们就永远不会反叛。”</sup>
+<span class="blurred">
+  <sup>"给他们面包和马戏，他们就永远不会反叛。"</sup>
 </span>
 
 </div>
 
 </Card>
-
-<style jsx>{`
-  .blurred {
-    filter: blur(5px);
-    cursor: pointer;
-    transition: filter 0.3s ease;
-  }
-  .blurred:hover {
-    filter: blur(0);
-  }
-`}</style>

@@ -13,6 +13,7 @@ export interface PostLayoutProps {
   updatedDate?: Date
   description?: string
   image?: string
+  hasMath?: boolean
   readingTime?: ReadingTime
   toc?: TOCItem[]
   body?: string

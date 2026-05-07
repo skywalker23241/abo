@@ -16,8 +16,6 @@ import { imageConfig } from './src/utils/image-config'
 import path from 'path'
 import netlify from '@astrojs/netlify'
 
-import react from '@astrojs/react'
-
 import robotsTxt from 'astro-robots-txt'
 
 export default defineConfig({
@@ -43,7 +41,6 @@ export default defineConfig({
     }),
     mdx(),
     sitemap(),
-    react(),
     robotsTxt()
   ],
   vite: {

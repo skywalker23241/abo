@@ -7,7 +7,7 @@
     /* Typography */
     --sans:
         AlanSans-Regular, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu,
-        Cantarell, 'Fira Sans', 'Droid Sans', 'Helvetica Neue', MapleMono-CN-Regular, sans-serif;
+        Cantarell, 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
     --serif: Besley, Charter, Baskerville, Georgia, Cambria, 'Times New Roman', Times, serif;
     --mono: SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
 
@@ -37,30 +37,6 @@
     --accent: #1a1a1a;
 
     /* Syntax Theme */
-    --astro-code-foreground: #1a1a1a;
-    --astro-code-background: #f0f0ea;
-    --astro-code-token-constant: #1a1a1a;
-    --astro-code-token-string: #1a1a1a;
-    --astro-code-token-comment: #999999;
-    --astro-code-token-keyword: #555555;
-    --astro-code-token-parameter: #1a1a1a;
-    --astro-code-token-function: #1a1a1a;
-    --astro-code-token-string-expression: #555555;
-    --astro-code-token-punctuation: #555555;
-    --astro-code-token-link: #555555;
-}
-
-html.light {
-    --bg: #fafaf7;
-    --text-primary: #1a1a1a;
-    --text-secondary: #666666;
-    --text-tertiary: #999999;
-    --border: #e5e5e0;
-    --selection: rgba(0, 0, 0, 0.08);
-    --code-bg: #f0f0ea;
-    --mark: #fff4a3;
-    --accent: #1a1a1a;
-
     --astro-code-foreground: #1a1a1a;
     --astro-code-background: #f0f0ea;
     --astro-code-token-constant: #1a1a1a;
@@ -294,4 +270,14 @@ svg {
     display: inline-flex;
     vertical-align: middle;
     margin: 0 0.25rem;
+}
+
+.blurred {
+    filter: blur(5px);
+    cursor: pointer;
+    transition: filter 0.3s ease;
+}
+
+.blurred:hover {
+    filter: blur(0);
 }
