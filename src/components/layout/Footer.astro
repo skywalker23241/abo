@@ -7,7 +7,7 @@ const today = new Date()
   <hr />
   <div class="footer-row">
     <span class="copyright">
-      &copy; {today.getFullYear()} {themeConfig.site.author}
+      &copy; {today.getFullYear()} <a href="https://github.com/skywalker23241" target="_blank" rel="noopener noreferrer">{themeConfig.site.author}</a>
     </span>
     <div class="footer-links">
       <a href="/rss.xml" aria-label="RSS feed">rss</a>
@@ -52,6 +52,6 @@ const today = new Date()
 
   .site-footer a:hover {
     color: var(--text-primary);
-    box-shadow: inset 0 -0.28em 0 color-mix(in srgb, var(--selection) 100%, transparent);
+    background-color: var(--selection);
   }
 </style>
