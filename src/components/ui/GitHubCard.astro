@@ -2,6 +2,7 @@
   import type { GitHubRepoData, CachedRepoData, CardElements } from '@/types'
 
   let githubCardsObserver: IntersectionObserver | null = null
+  let githubCardsSetupPending = false
 
   // Retrieve cached GitHub repository data from localStorage with expiration check
   function getCachedData(repo: string): GitHubRepoData | null {
@@ -143,8 +144,18 @@
     Array.from(githubCards).forEach((card) => githubCardsObserver?.observe(card))
   }
 
-  lazySetupGithubCards()
-  document.addEventListener('astro:page-load', lazySetupGithubCards)
+  function scheduleGithubCardsSetup() {
+    if (githubCardsSetupPending) return
+    githubCardsSetupPending = true
+    requestAnimationFrame(() => {
+      githubCardsSetupPending = false
+      lazySetupGithubCards()
+    })
+  }
+
+  scheduleGithubCardsSetup()
+  document.addEventListener('astro:after-swap', scheduleGithubCardsSetup)
+  document.addEventListener('astro:page-load', scheduleGithubCardsSetup)
 </script>
 
 <style is:inline>

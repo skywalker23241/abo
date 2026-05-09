@@ -1,6 +1,9 @@
 <script is:inline>
   ;(function () {
-    if (window.__giscusLoaderInitialized) return
+    if (window.__giscusLoaderInitialized) {
+      window.__scheduleGiscus?.()
+      return
+    }
     window.__giscusLoaderInitialized = true
 
     const GISCUS_ATTRS = {
@@ -34,7 +37,10 @@
       container.appendChild(script)
     }
 
-    function schedule() {
+    let giscusObserver = null
+    let giscusSchedulePending = false
+
+    function hydrate() {
       const container = document.getElementById('giscus-container')
       if (!container || !container.isConnected) return
       if (container.dataset.giscusHydrated === 'true') return
@@ -44,7 +50,8 @@
         return
       }
 
-      const observer = new IntersectionObserver(
+      giscusObserver?.disconnect()
+      giscusObserver = new IntersectionObserver(
         function (entries, currentObserver) {
           if (
             !entries.some(function (e) {
@@ -58,9 +65,21 @@
         { rootMargin: '200px 0px' }
       )
 
-      observer.observe(container)
+      giscusObserver.observe(container)
     }
 
+    function schedule() {
+      if (giscusSchedulePending) return
+      giscusSchedulePending = true
+      requestAnimationFrame(() => {
+        giscusSchedulePending = false
+        hydrate()
+      })
+    }
+
+    window.__scheduleGiscus = schedule
+    schedule()
+    document.addEventListener('astro:after-swap', schedule)
     document.addEventListener('astro:page-load', schedule)
   })()
 </script>

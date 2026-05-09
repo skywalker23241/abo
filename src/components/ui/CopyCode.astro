@@ -3,6 +3,8 @@ import { themeConfig } from '@/config'
 ---
 
 <script is:inline define:vars={{ copyCode: themeConfig.post.copyCode }}>
+  let copyCodeInitPending = false
+
   function initCopyCode() {
     const copyIcon = `
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="14" height="14" fill="currentColor">
@@ -26,11 +28,15 @@ import { themeConfig } from '@/config'
     const copyButtons = document.querySelectorAll('.copy-button')
 
     copyButtons.forEach((button) => {
+      if (button.dataset.copyCodeInit === '1') return
+
       const preElement = button.closest('.copy-code-block')
       if (!preElement) return
 
       const codeElement = preElement.querySelector('code')
       if (!codeElement) return
+
+      button.dataset.copyCodeInit = '1'
 
       if (!button.querySelector('svg')) {
         button.innerHTML = copyIcon
@@ -116,8 +122,19 @@ import { themeConfig } from '@/config'
     })
   }
 
-  document.addEventListener('astro:page-load', initCopyCode)
-  document.addEventListener('DOMContentLoaded', initCopyCode)
+  function scheduleCopyCodeInit() {
+    if (copyCodeInitPending) return
+    copyCodeInitPending = true
+    requestAnimationFrame(() => {
+      copyCodeInitPending = false
+      initCopyCode()
+    })
+  }
+
+  scheduleCopyCodeInit()
+  document.addEventListener('astro:after-swap', scheduleCopyCodeInit)
+  document.addEventListener('astro:page-load', scheduleCopyCodeInit)
+  document.addEventListener('DOMContentLoaded', scheduleCopyCodeInit)
 </script>
 
 <style is:inline>

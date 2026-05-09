@@ -1,8 +1,13 @@
 <script>
+  let footnoteInitPending = false
+
   function bindFootnoteEvents() {
     const footnoteLinks = document.querySelectorAll('[data-footnote-ref], [data-footnote-backref]')
 
     footnoteLinks.forEach((link) => {
+      if (link.dataset.footnoteScrollInit === '1') return
+      link.dataset.footnoteScrollInit = '1'
+
       link.addEventListener('click', (e) => {
         e.preventDefault()
         const href = link.getAttribute('href')
@@ -23,11 +28,17 @@
     })
   }
 
-  document.addEventListener('astro:page-load', () => {
-    bindFootnoteEvents()
-  })
+  function scheduleFootnoteEvents() {
+    if (footnoteInitPending) return
+    footnoteInitPending = true
+    requestAnimationFrame(() => {
+      footnoteInitPending = false
+      bindFootnoteEvents()
+    })
+  }
 
-  document.addEventListener('DOMContentLoaded', () => {
-    bindFootnoteEvents()
-  })
+  scheduleFootnoteEvents()
+  document.addEventListener('astro:after-swap', scheduleFootnoteEvents)
+  document.addEventListener('astro:page-load', scheduleFootnoteEvents)
+  document.addEventListener('DOMContentLoaded', scheduleFootnoteEvents)
 </script>

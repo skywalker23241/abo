@@ -1,9 +1,12 @@
 <script>
+  let xCardsSetupPending = false
+
   function loadXCards() {
     const xCards = document.querySelectorAll('.twitter-tweet')
     if (xCards.length === 0) return
 
     if (document.querySelector('script[src*="platform.twitter.com/widgets.js"]')) {
+      window.twttr?.widgets?.load?.()
       return
     }
 
@@ -18,9 +21,19 @@
     document.head.appendChild(script)
   }
 
-  document.addEventListener('DOMContentLoaded', loadXCards)
+  function scheduleXCards() {
+    if (xCardsSetupPending) return
+    xCardsSetupPending = true
+    requestAnimationFrame(() => {
+      xCardsSetupPending = false
+      loadXCards()
+    })
+  }
 
-  document.addEventListener('astro:page-load', loadXCards)
+  scheduleXCards()
+  document.addEventListener('astro:after-swap', scheduleXCards)
+  document.addEventListener('astro:page-load', scheduleXCards)
+  document.addEventListener('DOMContentLoaded', scheduleXCards)
 </script>
 
 <style is:inline>

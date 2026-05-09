@@ -1,4 +1,6 @@
 <script is:inline>
+  let neodbCardsSetupPending = false
+
   function loadNeoDBCards() {
     const allContainers = document.querySelectorAll('.neodb-card-container')
 
@@ -152,9 +154,12 @@
     }
 
     containers.forEach((container) => {
+      if (container.dataset.neodbLoaded === 'true') return
+
       const url = container.getAttribute('data-url')
 
       if (!url) return
+      container.dataset.neodbLoaded = 'true'
 
       let fetchUrl = ''
       const neodbUrlPattern =
@@ -201,8 +206,18 @@
     })
   }
 
-  loadNeoDBCards()
-  document.addEventListener('astro:page-load', loadNeoDBCards)
+  function scheduleNeoDBCards() {
+    if (neodbCardsSetupPending) return
+    neodbCardsSetupPending = true
+    requestAnimationFrame(() => {
+      neodbCardsSetupPending = false
+      loadNeoDBCards()
+    })
+  }
+
+  scheduleNeoDBCards()
+  document.addEventListener('astro:after-swap', scheduleNeoDBCards)
+  document.addEventListener('astro:page-load', scheduleNeoDBCards)
 </script>
 
 <style is:inline>

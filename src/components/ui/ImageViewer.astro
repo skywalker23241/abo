@@ -4,10 +4,14 @@
 
 <script is:inline>
   ;(function () {
-    if (window.__imageViewerRegistered) return
+    if (window.__imageViewerRegistered) {
+      window.__initImageViewer?.()
+      return
+    }
     window.__imageViewerRegistered = true
 
     let currentKeydownHandler = null
+    let imageViewerInitPending = false
 
     function initImageViewer() {
       const viewer = document.getElementById('image-viewer')
@@ -42,19 +46,35 @@
         document.body.style.overflow = ''
       }
 
-      viewer.addEventListener('transitionend', function (e) {
-        if (e.propertyName === 'opacity' && !viewer.classList.contains('active')) {
-          viewer.style.visibility = 'hidden'
-          if (viewerImg) {
-            viewerImg.src = ''
-            viewerImg.alt = ''
+      if (viewer.dataset.imageViewerInit !== '1') {
+        viewer.dataset.imageViewerInit = '1'
+
+        viewer.addEventListener('transitionend', function (e) {
+          if (e.propertyName === 'opacity' && !viewer.classList.contains('active')) {
+            viewer.style.visibility = 'hidden'
+            if (viewerImg) {
+              viewerImg.src = ''
+              viewerImg.alt = ''
+            }
+            viewer.style.cursor = 'auto'
+            setTimeout(function () {
+              viewer.style.cursor = ''
+            }, 10)
           }
-          viewer.style.cursor = 'auto'
-          setTimeout(function () {
-            viewer.style.cursor = ''
-          }, 10)
-        }
-      })
+        })
+
+        viewer.addEventListener('click', hideImage)
+
+        viewer.addEventListener(
+          'touchmove',
+          function (e) {
+            if (viewer.classList.contains('active')) {
+              e.preventDefault()
+            }
+          },
+          { passive: false }
+        )
+      }
 
       function bindImageClickEvents() {
         const previewImages = document.querySelectorAll('img[data-preview="true"]')
@@ -68,18 +88,6 @@
           })
         })
       }
-
-      viewer.addEventListener('click', hideImage)
-
-      viewer.addEventListener(
-        'touchmove',
-        function (e) {
-          if (viewer.classList.contains('active')) {
-            e.preventDefault()
-          }
-        },
-        { passive: false }
-      )
 
       // Clean up previous keydown handler to avoid stacking
       if (currentKeydownHandler) {
@@ -109,7 +117,19 @@
       viewer.style.pointerEvents = 'none'
     }
 
-    document.addEventListener('astro:page-load', initImageViewer)
+    function scheduleImageViewerInit() {
+      if (imageViewerInitPending) return
+      imageViewerInitPending = true
+      requestAnimationFrame(() => {
+        imageViewerInitPending = false
+        initImageViewer()
+      })
+    }
+
+    window.__initImageViewer = scheduleImageViewerInit
+    scheduleImageViewerInit()
+    document.addEventListener('astro:after-swap', scheduleImageViewerInit)
+    document.addEventListener('astro:page-load', scheduleImageViewerInit)
   })()
 </script>
 

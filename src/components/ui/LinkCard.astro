@@ -2,6 +2,7 @@
   import type { LinkCardMetadata } from '@/types'
 
   let linkCardsObserver: IntersectionObserver | null = null
+  let linkCardsSetupPending = false
   const metadataCache = new Map<string, LinkCardMetadata>()
 
   // Fetch metadata from URL using our own proxy API with caching
@@ -194,8 +195,18 @@
     Array.from(linkCards).forEach((card) => linkCardsObserver?.observe(card))
   }
 
-  setupLinkCards()
-  document.addEventListener('astro:page-load', setupLinkCards)
+  function scheduleLinkCardsSetup() {
+    if (linkCardsSetupPending) return
+    linkCardsSetupPending = true
+    requestAnimationFrame(() => {
+      linkCardsSetupPending = false
+      setupLinkCards()
+    })
+  }
+
+  scheduleLinkCardsSetup()
+  document.addEventListener('astro:after-swap', scheduleLinkCardsSetup)
+  document.addEventListener('astro:page-load', scheduleLinkCardsSetup)
 </script>
 
 <style is:inline>

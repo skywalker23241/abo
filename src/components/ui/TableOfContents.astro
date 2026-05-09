@@ -38,6 +38,11 @@ const { toc = [] }: TOCProps = Astro.props
   }}
 >
   ;(function () {
+    if (window.__tocController) {
+      window.__tocController.init()
+      return
+    }
+
     // Core state
     const state = {
       container: null,
@@ -249,16 +254,21 @@ const { toc = [] }: TOCProps = Astro.props
       requestAnimationFrame(() => init(targetDocument))
     }
 
-    // Event listeners
-    document.addEventListener('astro:page-load', (event) => {
+    function initFromEvent(event) {
       cleanup()
       scheduleInit(getDocumentFromEvent(event))
-    })
+    }
 
-    document.addEventListener('astro:after-swap', (event) => {
-      cleanup()
-      scheduleInit(getDocumentFromEvent(event))
-    })
+    window.__tocController = {
+      init: () => initFromEvent()
+    }
+
+    initFromEvent()
+
+    // Event listeners
+    document.addEventListener('astro:page-load', initFromEvent)
+
+    document.addEventListener('astro:after-swap', initFromEvent)
 
     // Fallback for when Astro transitions are disabled
     document.addEventListener('DOMContentLoaded', () => {
