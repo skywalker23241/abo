@@ -24,6 +24,9 @@ pnpm-debug.log*
 # IDE settings
 .idea/
 
+# Local agent worktrees
+.claude/worktrees/
+
 # Netlify build output
 .netlify/
 
