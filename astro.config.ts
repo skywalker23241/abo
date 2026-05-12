@@ -37,6 +37,9 @@ export default defineConfig({
   },
   integrations: [
     playformInline({
+      Beasties: {
+        pruneSource: false
+      },
       Exclude: [(file) => file.toLowerCase().includes('katex')]
     }),
     mdx(),

@@ -175,8 +175,31 @@ const currentPath = Astro.url.pathname
   }
 </style>
 
+<style is:inline>
+  .nav-toggle[aria-expanded='true'] .icon-open {
+    display: none;
+  }
+
+  .nav-toggle[aria-expanded='true'] .icon-close {
+    display: inline-flex;
+  }
+
+  @media (max-width: 768px) {
+    .nav-links[data-open='true'] {
+      max-height: 24rem;
+      opacity: 1;
+      padding-top: 0.75rem;
+      border-top-color: var(--border);
+    }
+  }
+</style>
+
 <script>
+  let headerNavCleanup: (() => void) | undefined
+
   function setupHeaderNav() {
+    headerNavCleanup?.()
+
     const toggle = document.querySelector<HTMLButtonElement>('.nav-toggle')
     const links = document.getElementById('primary-nav-links')
     if (!toggle || !links) return
@@ -186,24 +209,29 @@ const currentPath = Astro.url.pathname
       links.setAttribute('data-open', String(open))
     }
 
-    toggle.addEventListener('click', () => {
+    const onToggle = () => {
       setOpen(toggle.getAttribute('aria-expanded') !== 'true')
-    })
+    }
 
-    links.querySelectorAll('a').forEach((a) => {
-      a.addEventListener('click', () => setOpen(false))
-    })
+    toggle.addEventListener('click', onToggle)
+
+    const linkItems = Array.from(links.querySelectorAll('a'))
+    const closeMenu = () => setOpen(false)
+    linkItems.forEach((a) => a.addEventListener('click', closeMenu))
 
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setOpen(false)
     }
     document.addEventListener('keydown', onKey)
-    document.addEventListener(
-      'astro:before-swap',
-      () => document.removeEventListener('keydown', onKey),
-      { once: true }
-    )
+
+    headerNavCleanup = () => {
+      toggle.removeEventListener('click', onToggle)
+      linkItems.forEach((a) => a.removeEventListener('click', closeMenu))
+      document.removeEventListener('keydown', onKey)
+    }
   }
 
+  setupHeaderNav()
   document.addEventListener('astro:page-load', setupHeaderNav)
+  document.addEventListener('astro:before-swap', () => headerNavCleanup?.())
 </script>
