@@ -172,6 +172,7 @@ const { toc = [] }: TOCProps = Astro.props
       if (!state.links?.length || !state.positions.length) return
 
       const scrollTop = window.pageYOffset + 100
+      state.container?.classList.toggle('is-engaged', window.pageYOffset > 160)
       let currentActive = null
 
       // Find current active heading
@@ -293,13 +294,18 @@ const { toc = [] }: TOCProps = Astro.props
   }
 
   .toc-container.fixed-position {
-    opacity: 1;
+    opacity: 0.48;
     position: fixed;
     top: 12rem;
     margin-top: 0;
     padding-left: 1rem;
     z-index: 10;
     left: auto;
+  }
+
+  .toc-container.fixed-position:hover,
+  .toc-container.fixed-position.is-engaged {
+    opacity: 1;
   }
 
   .toc-nav {
@@ -347,8 +353,13 @@ const { toc = [] }: TOCProps = Astro.props
     transition:
       color 0.2s ease-out,
       font-size 0.2s ease-out,
-      text-indent 0.2s ease-out;
+      text-indent 0.2s ease-out,
+      transform 0.2s ease-out;
     cursor: pointer;
+  }
+
+  .toc-container:hover .toc-link {
+    transform: translateX(0.1rem);
   }
 
   .toc-link::after {

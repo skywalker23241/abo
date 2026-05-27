@@ -1,51 +1,53 @@
 ---
-import List from 'phosphor-astro/List.astro'
-import X from 'phosphor-astro/X.astro'
 import ThemeToggle from '@/components/ui/ThemeToggle.astro'
-
-const navLinks = [
-  { href: '/', label: '主页' },
-  { href: '/categories', label: '分类' },
-  { href: '/now', label: '现在' },
-  { href: '/nav', label: '书签' },
-  { href: '/newsletter', label: '订阅' },
-  { href: '/para-notes', label: '笔记' }
-]
-
-const currentPath = Astro.url.pathname
 ---
 
 <header class="site-header">
   <nav class="site-nav" aria-label="Primary">
-    <button
-      type="button"
-      class="nav-toggle"
-      aria-label="切换菜单"
-      aria-expanded="false"
-      aria-controls="primary-nav-links"
-    >
-      <List class="icon-open" width={20} height={20} />
-      <X class="icon-close" width={20} height={20} />
-    </button>
-    <div id="primary-nav-links" class="nav-links" data-open="false">
-      {
-        navLinks.map(({ href, label }) => {
-          const isActive = href === '/' ? currentPath === '/' : currentPath.startsWith(href)
-          return (
-            <a href={href} class:list={['nav-link', { active: isActive }]}>
-              {label}
-            </a>
-          )
-        })
-      }
+    <a class="site-brand" href="/" aria-label="Abo 主页">
+      <img
+        class="brand-logo brand-logo-light"
+        src="/logo-light.png"
+        alt="Abo"
+        width="184"
+        height="112"
+      />
+      <img
+        class="brand-logo brand-logo-dark"
+        src="/logo-dark.png"
+        alt=""
+        width="184"
+        height="112"
+      />
+    </a>
+    <div class="nav-actions">
+      <ThemeToggle />
     </div>
-    <ThemeToggle />
   </nav>
 </header>
 
 <style>
   .site-header {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    margin-top: -2.5rem;
     margin-bottom: 2.25rem;
+    width: 100vw;
+    margin-left: calc(50% - 50vw);
+    margin-right: calc(50% - 50vw);
+    padding-top: 2.5rem;
+    background-color: color-mix(in srgb, var(--bg) 82%, transparent);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    transition:
+      background-color 0.18s ease-out,
+      box-shadow 0.18s ease-out;
+  }
+
+  .site-header.is-scrolled {
+    background-color: color-mix(in srgb, var(--bg) 92%, transparent);
+    box-shadow: 0 0.35rem 1.4rem color-mix(in srgb, var(--text-primary) 7%, transparent);
   }
 
   .site-nav {
@@ -53,38 +55,48 @@ const currentPath = Astro.url.pathname
     justify-content: space-between;
     align-items: center;
     gap: 1rem;
-    padding-bottom: 0.85rem;
-    border-bottom: 1px solid var(--border);
+    box-sizing: border-box;
+    width: 100%;
+    max-width: var(--content-width);
+    margin: 0 auto;
+    padding: 0 1.5rem 0.85rem;
   }
 
-  .nav-links {
-    display: flex;
-    align-items: center;
-    gap: 1.25rem;
-    font-size: var(--font-size-m);
-    flex-wrap: wrap;
-  }
-
-  .nav-link {
+  .site-brand {
     display: inline-flex;
     align-items: center;
-    justify-content: center;
-    color: var(--text-secondary);
+    flex: 0 0 auto;
+    width: 5rem;
+    height: 3.125rem;
+    color: var(--text-primary);
     text-decoration: none;
-    transition:
-      color 0.15s ease-out,
-      background-color 0.15s ease-out;
   }
 
-  .nav-link:hover {
-    color: var(--text-primary);
-    background-color: var(--selection);
+  .brand-logo {
+    display: block;
+    width: 5rem;
+    height: auto;
+    aspect-ratio: 8 / 5;
+    object-fit: contain;
   }
 
-  .nav-link.active {
-    color: var(--text-primary);
-    background-color: var(--selection);
-    font-weight: 600;
+  .brand-logo-dark {
+    display: none;
+  }
+
+  :global(html.dark) .brand-logo-light {
+    display: none;
+  }
+
+  :global(html.dark) .brand-logo-dark {
+    display: block;
+  }
+
+  .nav-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex: 0 0 auto;
   }
 
   .site-nav :global(astro-theme-toggle) {
@@ -99,139 +111,45 @@ const currentPath = Astro.url.pathname
     color: var(--text-primary);
   }
 
-  .nav-toggle {
-    display: none;
-    align-items: center;
-    justify-content: center;
-    width: 20px;
-    height: 20px;
-    padding: 0;
-    background: transparent;
-    border: 0;
-    color: var(--text-secondary);
-    cursor: pointer;
-    transition: color 0.15s ease-out;
-  }
-
-  .nav-toggle:hover {
-    color: var(--text-primary);
-  }
-
-  .nav-toggle .icon-close {
-    display: none;
-  }
-
-  .nav-toggle[aria-expanded='true'] .icon-open {
-    display: none;
-  }
-
-  .nav-toggle[aria-expanded='true'] .icon-close {
-    display: inline-flex;
-  }
-
   @media (max-width: 768px) {
     .site-header {
+      margin-top: -1.75rem;
       margin-bottom: 1.75rem;
+      padding-top: 1.75rem;
     }
 
-    .site-nav {
-      flex-wrap: wrap;
-      gap: 0.5rem;
+    .site-brand {
+      width: 4.5rem;
+      height: 2.8125rem;
     }
 
-    .nav-toggle {
-      display: inline-flex;
-      order: 1;
+    .brand-logo {
+      width: 4.5rem;
     }
 
-    .site-nav :global(astro-theme-toggle) {
-      order: 2;
-    }
-
-    .nav-links {
-      order: 3;
-      flex-basis: 100%;
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 0.6rem;
-      max-height: 0;
-      opacity: 0;
-      overflow: hidden;
-      padding-top: 0;
-      border-top: 1px solid transparent;
-      transition:
-        max-height 0.2s ease-out,
-        opacity 0.15s ease-out,
-        padding-top 0.2s ease-out,
-        border-top-color 0.2s ease-out;
-    }
-
-    .nav-links[data-open='true'] {
-      max-height: 24rem;
-      opacity: 1;
-      padding-top: 0.75rem;
-      border-top-color: var(--border);
-    }
-  }
-</style>
-
-<style is:inline>
-  .nav-toggle[aria-expanded='true'] .icon-open {
-    display: none;
-  }
-
-  .nav-toggle[aria-expanded='true'] .icon-close {
-    display: inline-flex;
-  }
-
-  @media (max-width: 768px) {
-    .nav-links[data-open='true'] {
-      max-height: 24rem;
-      opacity: 1;
-      padding-top: 0.75rem;
-      border-top-color: var(--border);
+    .nav-actions {
+      margin-left: auto;
     }
   }
 </style>
 
 <script>
-  let headerNavCleanup: (() => void) | undefined
+  function setupHeaderScrollState() {
+    const header = document.querySelector<HTMLElement>('.site-header')
+    if (!header || header.dataset.scrollStateBound === 'true') return
+    header.dataset.scrollStateBound = 'true'
 
-  function setupHeaderNav() {
-    headerNavCleanup?.()
-
-    const toggle = document.querySelector<HTMLButtonElement>('.nav-toggle')
-    const links = document.getElementById('primary-nav-links')
-    if (!toggle || !links) return
-
-    const setOpen = (open: boolean) => {
-      toggle.setAttribute('aria-expanded', String(open))
-      links.setAttribute('data-open', String(open))
+    const syncScrolledState = () => {
+      header.classList.toggle('is-scrolled', window.scrollY > 12)
     }
 
-    const onToggle = () => {
-      setOpen(toggle.getAttribute('aria-expanded') !== 'true')
-    }
-
-    toggle.addEventListener('click', onToggle)
-
-    const linkItems = Array.from(links.querySelectorAll('a'))
-    const closeMenu = () => setOpen(false)
-    linkItems.forEach((a) => a.addEventListener('click', closeMenu))
-
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false)
-    }
-    document.addEventListener('keydown', onKey)
-
-    headerNavCleanup = () => {
-      toggle.removeEventListener('click', onToggle)
-      linkItems.forEach((a) => a.removeEventListener('click', closeMenu))
-      document.removeEventListener('keydown', onKey)
-    }
+    syncScrolledState()
+    window.addEventListener('scroll', syncScrolledState, { passive: true })
+    document.addEventListener('astro:before-swap', () => {
+      window.removeEventListener('scroll', syncScrolledState)
+    })
   }
 
-  setupHeaderNav()
-  document.addEventListener('astro:page-load', setupHeaderNav)
-  document.addEventListener('astro:before-swap', () => headerNavCleanup?.())
+  setupHeaderScrollState()
+  document.addEventListener('astro:page-load', setupHeaderScrollState)
 </script>

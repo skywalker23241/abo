@@ -17,6 +17,7 @@ import XPOST from '@/components/ui/XPOST.astro'
 import CopyCode from '@/components/ui/CopyCode.astro'
 import LikeButton from '@/components/widgets/LikeButton.astro'
 import BaseLayout from '@/layouts/BaseLayout.astro'
+import { getSortedFilteredPosts } from '@/utils/draft'
 
 import { themeConfig } from '@/config'
 
@@ -24,6 +25,21 @@ const { title, displayTitle, pubDate, updatedDate, description, hasMath, reading
   Astro.props as PostLayoutProps
 
 const postSlug = Astro.url.pathname.split('/').filter(Boolean).pop() || ''
+const sortedPosts = await getSortedFilteredPosts()
+const currentPostIndex = sortedPosts.findIndex((post) => post.id === postSlug)
+const previousPost = currentPostIndex > 0 ? sortedPosts[currentPostIndex - 1] : undefined
+const nextPost =
+  currentPostIndex >= 0 && currentPostIndex < sortedPosts.length - 1
+    ? sortedPosts[currentPostIndex + 1]
+    : undefined
+const previousPostLink = previousPost && {
+  href: `/${previousPost.id}/`,
+  label: previousPost.data.displayTitle || previousPost.data.title
+}
+const nextPostLink = nextPost && {
+  href: `/${nextPost.id}/`,
+  label: nextPost.data.displayTitle || nextPost.data.title
+}
 const ogImage = `/open-graph/${postSlug}.png`
 const postDescription = description || themeConfig.site.description
 const md = new MarkdownIt({ html: false })
@@ -79,7 +95,9 @@ const headingHtml = displayTitle ? md.renderInline(displayTitle) : title
   <NeoDBCard />
   {themeConfig.post.imageViewer && <ImageViewer />}
   {themeConfig.post.linkCard && <LinkCard />}
-  {themeConfig.general.footer && <Footer />}
+  {themeConfig.general.footer && (
+    <Footer previousPostLink={previousPostLink} nextPostLink={nextPostLink} />
+  )}
 </BaseLayout>
 
 <style>

@@ -32,7 +32,7 @@ const { slug } = Astro.props
 
 <style>
   .like-widget {
-    margin: 3rem 0 1rem 0;
+    margin: 4rem 0 1.75rem 0;
     padding-top: 1.5rem;
     border-top: 1px solid var(--border);
     display: flex;
@@ -125,6 +125,11 @@ const { slug } = Astro.props
   }
 
   @media (max-width: 520px) {
+    .like-widget {
+      margin-top: 3rem;
+      justify-content: flex-start;
+    }
+
     .like-hint {
       display: none;
     }

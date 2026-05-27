@@ -16,11 +16,19 @@ for (const post of posts) {
 }
 
 const categories = [...categoryMap.entries()].sort((a, b) => b[1].length - a[1].length)
+const totalPosts = posts.length
+const totalCategories = categories.length
 ---
 
 <IndexLayout title={pageTitle} description={pageDescription}>
   <section class="categories-page">
-    <h1>分类</h1>
+    <header class="categories-header">
+      <h1>分类</h1>
+      <p>
+        <span>{totalCategories} 个分类</span>
+        <span>{totalPosts} 篇文章</span>
+      </p>
+    </header>
     <ul class="category-tabs">
       {
         categories.map(([name, postsInCategory]) => (
@@ -63,9 +71,22 @@ const categories = [...categoryMap.entries()].sort((a, b) => b[1].length - a[1].
 </IndexLayout>
 
 <style>
-  .categories-page h1 {
-    margin: 0 0 1rem;
+  .categories-header {
+    margin-bottom: 1.2rem;
+  }
+
+  .categories-header h1 {
+    margin: 0 0 0.35rem;
     font-size: 1.75rem;
+  }
+
+  .categories-header p {
+    display: flex;
+    gap: 0.8rem;
+    margin: 0;
+    color: var(--text-tertiary);
+    font-family: var(--mono);
+    font-size: 0.78rem;
   }
 
   .category-tabs {
@@ -83,18 +104,21 @@ const categories = [...categoryMap.entries()].sort((a, b) => b[1].length - a[1].
     gap: 0.4rem;
     padding: 0.3rem 0.65rem;
     border: none;
+    border-radius: 999px;
     background-color: var(--selection);
     text-decoration: none;
     color: var(--text-secondary);
     font-size: 0.8rem;
     transition:
       color 0.15s ease-out,
-      background-color 0.15s ease-out;
+      background-color 0.15s ease-out,
+      transform 0.15s ease-out;
   }
 
   .category-tabs a:hover {
     color: var(--text-primary);
     background-color: color-mix(in srgb, var(--selection) 80%, transparent);
+    transform: translateY(-0.08rem);
   }
 
   .count {
@@ -109,7 +133,7 @@ const categories = [...categoryMap.entries()].sort((a, b) => b[1].length - a[1].
   }
 
   .category-section h2 {
-    margin: 0 0 0.45rem;
+    margin: 0 0 0.5rem;
     font-size: 1rem;
     color: var(--text-secondary);
   }
@@ -126,19 +150,20 @@ const categories = [...categoryMap.entries()].sort((a, b) => b[1].length - a[1].
     gap: 0.8rem;
     text-decoration: none;
     color: var(--text-primary);
-    padding: 0.12rem 0;
+    padding: 0.14rem 0.35rem;
+    border-radius: 6px;
+    transition:
+      background-color 0.15s ease-out,
+      transform 0.15s ease-out;
+  }
+
+  .post-link:hover {
+    background-color: color-mix(in srgb, var(--selection) 82%, transparent);
+    transform: translateX(0.12rem);
   }
 
   .post-link:hover .post-title {
     color: var(--text-primary);
-  }
-
-  .post-link {
-    transition: background-color 0.15s ease-out;
-  }
-
-  .post-link:hover {
-    background-color: var(--selection);
   }
 
   .post-date {
@@ -152,5 +177,34 @@ const categories = [...categoryMap.entries()].sort((a, b) => b[1].length - a[1].
   .post-title {
     min-width: 0;
     font-size: 0.84rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  @media (max-width: 520px) {
+    .categories-header p {
+      flex-wrap: wrap;
+      gap: 0.45rem 0.8rem;
+    }
+
+    .post-link {
+      align-items: flex-start;
+      flex-direction: column;
+      gap: 0.05rem;
+      padding-top: 0.28rem;
+      padding-bottom: 0.28rem;
+    }
+
+    .post-date {
+      min-width: 0;
+      font-size: 0.68rem;
+    }
+
+    .post-title {
+      max-width: 100%;
+      white-space: normal;
+      line-height: 1.45;
+    }
   }
 </style>

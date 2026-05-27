@@ -8,7 +8,8 @@ const pageDescription = '通过邮件接收新文章'
 ---
 
 <IndexLayout title={pageTitle} description={pageDescription}>
-  <div>
+  <div class="newsletter-page">
+    <p class="newsletter-note">只在有新文章时发送，也可以继续使用 RSS。</p>
     <form
       action="https://buttondown.com/api/emails/embed-subscribe/junbo"
       method="post"
@@ -40,6 +41,19 @@ const pageDescription = '通过邮件接收新文章'
     display: flex;
     align-items: center;
     gap: 0.5rem;
+  }
+
+  .newsletter-page {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+  }
+
+  .newsletter-note {
+    margin: 0;
+    color: var(--text-tertiary);
+    font-size: var(--font-size-s);
+    line-height: 1.6;
   }
 
   .input-wrapper {
@@ -104,5 +118,16 @@ const pageDescription = '通过邮件接收新文章'
 
   .rss:hover {
     color: var(--text-primary);
+  }
+
+  @media (max-width: 420px) {
+    .form {
+      align-items: stretch;
+      flex-wrap: wrap;
+    }
+
+    .input-wrapper {
+      flex-basis: 100%;
+    }
   }
 </style>
