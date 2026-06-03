@@ -145,6 +145,7 @@ const pageDescription = '一个公开可读、私有可写的小型 memo zone。
     }
 
     let passcodeTimer = 0
+    let unlockAttemptId = 0
 
     function escapeHtml(value) {
       return value
@@ -212,6 +213,9 @@ const pageDescription = '一个公开可读、私有可写的小型 memo zone。
 
     function hideModal(kind) {
       const modal = kind === 'search' ? elements.searchModal : elements.passcodeModal
+      if (kind === 'passcode') {
+        window.clearTimeout(passcodeTimer)
+      }
       modal?.setAttribute('hidden', '')
     }
 
@@ -223,17 +227,23 @@ const pageDescription = '一个公开可读、私有可写的小型 memo zone。
     }
 
     async function unlockWithPasscode(passcode) {
-      if (!passcode || state.authenticated) return
+      const normalizedPasscode = passcode.trim()
+      if (!normalizedPasscode || state.authenticated) return
+
+      const attemptId = ++unlockAttemptId
 
       try {
-        setBusy(true)
+        if (elements.passcodeInput instanceof HTMLInputElement) {
+          elements.passcodeInput.setAttribute('aria-busy', 'true')
+        }
+
         const response = await fetch('/api/para-notes', {
           method: 'POST',
           headers: {
             'content-type': 'application/json'
           },
           body: JSON.stringify({
-            passcode,
+            passcode: normalizedPasscode,
             title: 'auth-check',
             content: 'auth-check',
             dryRun: true
@@ -241,19 +251,26 @@ const pageDescription = '一个公开可读、私有可写的小型 memo zone。
         })
 
         const data = await response.json().catch(() => ({}))
+        if (attemptId !== unlockAttemptId) return
+
         if (!response.ok) {
           if (response.status === 401) return
           throw new Error(typeof data.error === 'string' ? data.error : 'invalid admin passcode')
         }
 
-        sessionStorage.setItem(storageKey, passcode)
+        if (getPasscode() !== normalizedPasscode) return
+
+        sessionStorage.setItem(storageKey, normalizedPasscode)
         setAuthenticated(true)
         hideModal('passcode')
       } catch (error) {
+        if (attemptId !== unlockAttemptId) return
         const message = error instanceof Error ? error.message : '管理员验证失败'
         setStatus(message, 'error')
       } finally {
-        setBusy(false)
+        if (attemptId === unlockAttemptId && elements.passcodeInput instanceof HTMLInputElement) {
+          elements.passcodeInput.removeAttribute('aria-busy')
+        }
       }
     }
 
@@ -403,14 +420,13 @@ const pageDescription = '一个公开可读、私有可写的小型 memo zone。
     })
 
     elements.passcodeInput?.addEventListener('input', () => {
-      const passcode = getPasscode()
       window.clearTimeout(passcodeTimer)
 
-      if (!passcode) return
+      if (!getPasscode()) return
 
       passcodeTimer = window.setTimeout(() => {
-        unlockWithPasscode(passcode)
-      }, 220)
+        unlockWithPasscode(getPasscode())
+      }, 320)
     })
 
     elements.form?.addEventListener('submit', async (event) => {
@@ -754,14 +770,13 @@ const pageDescription = '一个公开可读、私有可写的小型 memo zone。
     display: grid;
     place-items: center;
     padding: 1.5rem;
-    animation: overlay-fade 0.2s ease;
+    animation: overlay-fade 0.16s ease-out;
   }
 
   .overlay .modal-backdrop {
     position: absolute;
     inset: 0;
-    background: rgba(18, 18, 18, 0.18);
-    backdrop-filter: blur(6px);
+    background: rgba(18, 18, 18, 0.1);
   }
 
   .overlay .overlay-card {
@@ -772,7 +787,7 @@ const pageDescription = '一个公开可读、私有可写的小型 memo zone。
     border-radius: 18px;
     padding: 0.95rem 0.95rem 1rem;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
-    animation: overlay-pop 0.22s cubic-bezier(0.2, 0.9, 0.2, 1);
+    animation: overlay-pop 0.18s cubic-bezier(0.22, 1, 0.36, 1);
   }
 
   .overlay .search-card {
@@ -864,12 +879,7 @@ const pageDescription = '一个公开可读、私有可写的小型 memo zone。
   @keyframes overlay-pop {
     from {
       opacity: 0;
-      transform: translateY(8px) scale(0.94);
-    }
-
-    60% {
-      opacity: 1;
-      transform: translateY(-2px) scale(1.01);
+      transform: translateY(6px) scale(0.985);
     }
 
     to {
