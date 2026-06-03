@@ -13,6 +13,7 @@ declare module 'astro:content' {
 
 interface ImportMetaEnv {
   readonly PRIVATE_PAGE_PASSWORD?: string
+  readonly PRIVATE_MEMO_ADMIN_PASSCODE?: string
 }
 
 interface ImportMeta {

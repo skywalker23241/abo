@@ -3,6 +3,7 @@ import { themeConfig } from '@/config'
 import { ClientRouter } from 'astro:transitions'
 
 import FaviconThemeSwitcher from '@/components/ui/FaviconThemeSwitcher.astro'
+import BackToTop from '@/components/ui/BackToTop.astro'
 import GiscusLoader from '@/components/widgets/GiscusLoader.astro'
 import TransitionWrapper from '@/components/layout/TransitionWrapper.astro'
 import type { LayoutProps } from '@/types'
@@ -23,6 +24,7 @@ const isPostLayout = type === 'post'
   <body>
     <FaviconThemeSwitcher />
     {isPostLayout && <GiscusLoader />}
+    <BackToTop />
 
     {
       fadeAnimation ? (
