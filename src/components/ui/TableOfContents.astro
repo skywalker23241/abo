@@ -157,10 +157,7 @@ const { toc = [] }: TOCProps = Astro.props
           const scopeRoot = getScopeRoot(state.container)
           const target = scopeRoot.querySelector(href)
           if (target) {
-            const rect = target.getBoundingClientRect()
-            const scrollTop = window.pageYOffset || document.documentElement.scrollTop
-            const offset = rect.top + scrollTop - 96
-            window.scrollTo({ top: offset, behavior: 'smooth' })
+            target.scrollIntoView({ behavior: 'smooth', block: 'start' })
             history.pushState(null, null, href)
           }
         }
