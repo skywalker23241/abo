@@ -1,7 +1,7 @@
 import { getCollection } from 'astro:content'
 import { OGImageRoute } from 'astro-og-canvas'
 
-const collectionEntries = await getCollection('posts')
+const collectionEntries = (await getCollection('posts')).filter(({ id }) => !id.startsWith('_'))
 
 // Map the array of content collection entries to create an object.
 // Converts [{ id: 'post.md', data: { title: 'Example', pubDate: Date } }]

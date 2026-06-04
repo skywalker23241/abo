@@ -35,6 +35,7 @@ export interface LayoutProps extends TransitionProps {
 export interface BaseHeadProps {
   title: string
   description: string
+  seoTitle?: string
   ogImage?: string
   pageType?: 'website' | 'article'
   publishedTime?: Date

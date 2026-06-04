@@ -11,7 +11,7 @@ import type { LayoutProps } from '@/types'
 type Props = LayoutProps
 
 const { type = 'page' } = Astro.props
-const language = themeConfig.site.language || 'en-US'
+const language = (themeConfig.site.language || 'en-US').replace('_', '-')
 const fadeAnimation = themeConfig.general.fadeAnimation
 const isPostLayout = type === 'post'
 ---

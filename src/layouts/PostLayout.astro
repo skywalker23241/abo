@@ -18,10 +18,11 @@ import CopyCode from '@/components/ui/CopyCode.astro'
 import LikeButton from '@/components/widgets/LikeButton.astro'
 import BaseLayout from '@/layouts/BaseLayout.astro'
 import { getSortedFilteredPosts } from '@/utils/draft'
+import { buildExcerpt } from '@/utils/seo'
 
 import { themeConfig } from '@/config'
 
-const { title, displayTitle, pubDate, updatedDate, description, hasMath, readingTime, toc } =
+const { title, displayTitle, pubDate, updatedDate, description, hasMath, readingTime, toc, body } =
   Astro.props as PostLayoutProps
 
 const postSlug = Astro.url.pathname.split('/').filter(Boolean).pop() || ''
@@ -41,19 +42,21 @@ const nextPostLink = nextPost && {
   label: nextPost.data.displayTitle || nextPost.data.title
 }
 const ogImage = `/open-graph/${postSlug}.png`
-const postDescription = description || themeConfig.site.description
+const postDescription = description || buildExcerpt(body || '', themeConfig.site.description)
 const md = new MarkdownIt({ html: false })
 const headingHtml = displayTitle ? md.renderInline(displayTitle) : title
+const seoTitle = `${title} · ${themeConfig.site.title}`
 ---
 
 <BaseLayout
-  title={`${title} · ${themeConfig.site.title}`}
+  title={seoTitle}
   description={postDescription}
   type="post"
 >
   <BaseHead
-    title={`${title} · ${themeConfig.site.title}`}
+    title={title}
     description={postDescription}
+    seoTitle={seoTitle}
     ogImage={ogImage}
     pageType="article"
     publishedTime={pubDate}

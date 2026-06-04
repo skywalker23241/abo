@@ -7,6 +7,7 @@ import { parse as htmlParser } from 'node-html-parser'
 import sanitizeHtml from 'sanitize-html'
 import { themeConfig } from '@/config'
 import path from 'node:path'
+import { buildExcerpt, sanitizeFeedBody } from '@/utils/seo'
 
 const markdownParser = new MarkdownIt({
   html: true,
@@ -133,7 +134,7 @@ async function generateFeedInstance(context: APIContext) {
   for (const post of sortedPosts) {
     const postSlug = post.id.replace(/\.[^/.]+$/, '')
     const postUrl = new URL(postSlug, siteUrl).toString()
-    const rawHtml = markdownParser.render(post.body || '')
+    const rawHtml = markdownParser.render(sanitizeFeedBody(post.body || ''))
     const processedHtml = await fixRelativeImagePaths(rawHtml, siteUrl, post.id)
     const cleanHtml = sanitizeHtml(processedHtml, {
       allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img', 'div', 'span']),
@@ -149,6 +150,7 @@ async function generateFeedInstance(context: APIContext) {
       title: post.data.title,
       id: postUrl,
       link: postUrl,
+      description: post.data.description || buildExcerpt(post.body || '', description),
       content: cleanHtml,
       date: post.data.pubDate,
       published: post.data.pubDate
