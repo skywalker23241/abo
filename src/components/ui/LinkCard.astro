@@ -5,6 +5,63 @@
   let linkCardsSetupPending = false
   const metadataCache = new Map<string, LinkCardMetadata>()
 
+  function resolveUrl(value: string, baseUrl: string): string {
+    if (!value.trim()) {
+      return ''
+    }
+
+    try {
+      return new URL(value, baseUrl).href
+    } catch {
+      return value
+    }
+  }
+
+  function isBlockedMetadata(doc: Document, title: string, description: string, image: string): boolean {
+    const normalizedTitle = title.trim().toLowerCase()
+    if (image || description) {
+      return false
+    }
+
+    return (
+      normalizedTitle === 'just a moment...' ||
+      normalizedTitle === 'just a moment' ||
+      Boolean(doc.querySelector('script[src*="challenges.cloudflare.com"]')) ||
+      doc.documentElement.innerHTML.includes('/cdn-cgi/challenge-platform/')
+    )
+  }
+
+  function getFallbackMetadata(el: HTMLElement): LinkCardMetadata | null {
+    const url = el.dataset.url || window.location.href
+    const metadata = {
+      title: el.dataset.title?.trim() || '',
+      description: el.dataset.description?.trim() || '',
+      image: el.dataset.image ? resolveUrl(el.dataset.image.trim(), url) : '',
+      imageAlt: el.dataset.imageAlt?.trim() || el.dataset.title?.trim() || ''
+    }
+
+    return metadata.title || metadata.description || metadata.image ? metadata : null
+  }
+
+  function mergeMetadata(
+    fallback: LinkCardMetadata | null,
+    fetched: LinkCardMetadata | null
+  ): LinkCardMetadata | null {
+    if (!fallback) {
+      return fetched
+    }
+    if (!fetched) {
+      return fallback
+    }
+
+    return {
+      title: fetched.title || fallback.title,
+      description: fetched.description || fallback.description,
+      image: fetched.image || fallback.image,
+      imageAlt: fetched.imageAlt || fallback.imageAlt
+    }
+  }
+
   // Fetch metadata from URL using our own proxy API with caching
   async function fetchLinkMetadata(url: string): Promise<LinkCardMetadata | null> {
     // Check cache first
@@ -46,13 +103,18 @@
         doc.querySelector('meta[name="description"]')?.getAttribute('content') ||
         ''
 
-      const image =
+      const imageSource =
         doc.querySelector('meta[property="og:image"]')?.getAttribute('content') ||
         doc.querySelector('meta[name="twitter:image"]')?.getAttribute('content') ||
         ''
+      const image = imageSource ? resolveUrl(imageSource, url) : ''
 
       const imageAlt =
         doc.querySelector('meta[property="og:image:alt"]')?.getAttribute('content') || title || ''
+
+      if (isBlockedMetadata(doc, title || '', description || '', image)) {
+        return null
+      }
 
       const metadata = {
         title: title?.trim() || '',
@@ -77,47 +139,68 @@
     }
 
     try {
+      const fallback = getFallbackMetadata(el)
+      const fallbackTitleElement = el.querySelector('.link-card-title') as HTMLElement
+      const fallbackDescElement = el.querySelector('.link-card-description') as HTMLElement
+      const fallbackImageContainer = el.querySelector('.link-card-image') as HTMLElement
+      const fallbackImageElement = el.querySelector('.link-card-image img') as HTMLImageElement
+
+      if (fallback) {
+        renderLinkCardMetadata(
+          fallback,
+          fallbackTitleElement,
+          fallbackDescElement,
+          fallbackImageContainer,
+          fallbackImageElement
+        )
+      }
+
       // Fetch and update metadata
-      const metadata = await fetchLinkMetadata(url)
+      const metadata = mergeMetadata(fallback, await fetchLinkMetadata(url))
       if (!metadata) {
         return
       }
 
-      // Update title
       const titleElement = el.querySelector('.link-card-title') as HTMLElement
-      if (titleElement) {
-        if (metadata.title && metadata.title.trim()) {
-          titleElement.textContent = metadata.title
-          titleElement.style.display = 'block'
-        } else {
-          // Hide title element if empty
-          titleElement.style.display = 'none'
-        }
-      }
-
-      // Update description
       const descElement = el.querySelector('.link-card-description') as HTMLElement
-      if (descElement) {
-        if (metadata.description && metadata.description.trim()) {
-          descElement.textContent = metadata.description
-          descElement.style.display = 'block'
-        } else {
-          // Hide description element if empty
-          descElement.style.display = 'none'
-          descElement.textContent = ''
-        }
-      }
-
-      // Update image
       const imageContainer = el.querySelector('.link-card-image') as HTMLElement
       const imageElement = el.querySelector('.link-card-image img') as HTMLImageElement
-      if (imageContainer && imageElement && metadata.image) {
-        imageElement.src = metadata.image
-        imageElement.alt = metadata.imageAlt
-        imageContainer.style.display = 'block'
-      }
+      renderLinkCardMetadata(metadata, titleElement, descElement, imageContainer, imageElement)
     } catch {
       // Handle error silently
+    }
+  }
+
+  function renderLinkCardMetadata(
+    metadata: LinkCardMetadata,
+    titleElement: HTMLElement | null,
+    descElement: HTMLElement | null,
+    imageContainer: HTMLElement | null,
+    imageElement: HTMLImageElement | null
+  ) {
+    if (titleElement) {
+      if (metadata.title && metadata.title.trim()) {
+        titleElement.textContent = metadata.title
+        titleElement.style.display = 'block'
+      } else {
+        titleElement.style.display = 'none'
+      }
+    }
+
+    if (descElement) {
+      if (metadata.description && metadata.description.trim()) {
+        descElement.textContent = metadata.description
+        descElement.style.display = 'block'
+      } else {
+        descElement.style.display = 'none'
+        descElement.textContent = ''
+      }
+    }
+
+    if (imageContainer && imageElement && metadata.image) {
+      imageElement.src = metadata.image
+      imageElement.alt = metadata.imageAlt
+      imageContainer.style.display = 'block'
     }
   }
 

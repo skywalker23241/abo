@@ -12,10 +12,29 @@ const embedHandlers = {
       return false
     }
 
+    const escapeAttribute = (value) =>
+      String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/"/g, '&quot;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+
+    const dataAttributes = [
+      ['data-title', node.attributes?.title],
+      ['data-description', node.attributes?.description],
+      ['data-image', node.attributes?.image],
+      ['data-image-alt', node.attributes?.imageAlt ?? node.attributes?.imagealt]
+    ]
+      .filter(([, value]) => value)
+      .map(([name, value]) => `${name}="${escapeAttribute(value)}"`)
+      .join(' ')
+
+    const safeUrl = escapeAttribute(url)
+
     // Create the LinkCard HTML structure - all metadata will be fetched by JavaScript
     return `
       <div class="link-card-wrapper">
-        <a href="${url}" class="link-card" target="_blank" rel="noopener noreferrer" data-url="${url}">
+        <a href="${safeUrl}" class="link-card" target="_blank" rel="noopener noreferrer" data-url="${safeUrl}" ${dataAttributes}>
           <div class="link-card-content">
             <div class="link-card-url"></div>
             <p class="link-card-title" style="display: none;"></p>
