@@ -13,7 +13,12 @@ const pageDescription = '一个公开可读、私有可写的小型 memo zone。
       </div>
 
       <div class="page-actions">
-        <button id="memo-search-toggle" class="ghost-icon-button" type="button" aria-label="搜索笔记">
+        <button
+          id="memo-search-toggle"
+          class="ghost-icon-button"
+          type="button"
+          aria-label="搜索笔记"
+        >
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <path
               d="M10.5 4.5a6 6 0 1 0 3.79 10.65l4.28 4.27 1.06-1.06-4.27-4.28A6 6 0 0 0 10.5 4.5Z"
@@ -24,7 +29,12 @@ const pageDescription = '一个公开可读、私有可写的小型 memo zone。
               stroke-width="1.7"></path>
           </svg>
         </button>
-        <button id="memo-edit-toggle" class="ghost-icon-button edit-icon-button" type="button" aria-label="编辑笔记">
+        <button
+          id="memo-edit-toggle"
+          class="ghost-icon-button edit-icon-button"
+          type="button"
+          aria-label="编辑笔记"
+        >
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <path
               d="M4 20h4.2l9.9-9.9a1.7 1.7 0 0 0 0-2.4l-1.8-1.8a1.7 1.7 0 0 0-2.4 0L4 15.8V20Z"
@@ -56,12 +66,7 @@ const pageDescription = '一个公开可读、私有可写的小型 memo zone。
       <form id="memo-form" class="editor-form">
         <input id="memo-id" type="hidden" />
         <input id="memo-title" type="text" maxlength="120" placeholder="标题" required />
-        <textarea
-          id="memo-content"
-          rows="6"
-          maxlength="4000"
-          placeholder="写一点想法。"
-          required
+        <textarea id="memo-content" rows="6" maxlength="4000" placeholder="写一点想法。" required
         ></textarea>
         <div class="editor-actions">
           <button id="memo-submit" class="pill-button" type="submit">Save</button>
@@ -70,7 +75,7 @@ const pageDescription = '一个公开可读、私有可写的小型 memo zone。
     </section>
 
     <section class="memo-stream">
-      <div id="memo-empty" class="empty-state" hidden>还没有任何笔记。</div>
+      <div id="memo-empty" class="empty-state" hidden>努力加载中......</div>
       <div id="memo-list" class="memo-list" aria-live="polite"></div>
     </section>
   </div>
@@ -434,7 +439,8 @@ const pageDescription = '一个公开可读、私有可写的小型 memo zone。
 
       const passcode = getPasscode() || sessionStorage.getItem(storageKey) || ''
       const title = elements.title instanceof HTMLInputElement ? elements.title.value.trim() : ''
-      const content = elements.content instanceof HTMLTextAreaElement ? elements.content.value.trim() : ''
+      const content =
+        elements.content instanceof HTMLTextAreaElement ? elements.content.value.trim() : ''
 
       if (!passcode) {
         setStatus('缺少管理员口令。', 'error')
@@ -720,8 +726,11 @@ const pageDescription = '一个公开可读、私有可写的小型 memo zone。
     border: 1px solid var(--border);
     border-radius: 22px;
     padding: 1.2rem 1.25rem;
-    background:
-      linear-gradient(180deg, color-mix(in srgb, var(--bg) 88%, white 12%), color-mix(in srgb, var(--bg) 96%, var(--code-bg) 4%));
+    background: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--bg) 88%, white 12%),
+      color-mix(in srgb, var(--bg) 96%, var(--code-bg) 4%)
+    );
     transform: translateY(0);
     transition:
       transform 0.22s ease,
@@ -731,8 +740,11 @@ const pageDescription = '一个公开可读、私有可写的小型 memo zone。
   }
 
   html.dark .para-notes-page .memo-card {
-    background:
-      linear-gradient(180deg, color-mix(in srgb, var(--bg) 90%, white 2%), color-mix(in srgb, var(--bg) 96%, var(--code-bg) 4%));
+    background: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--bg) 90%, white 2%),
+      color-mix(in srgb, var(--bg) 96%, var(--code-bg) 4%)
+    );
   }
 
   .para-notes-page .memo-title {
