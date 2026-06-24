@@ -335,7 +335,7 @@ const pageDescription = '一个公开可读、私有可写的小型 memo zone。
 
       elements.empty.hidden = state.filteredNotes.length !== 0
       if (state.filteredNotes.length === 0) {
-        elements.empty.textContent = state.keyword ? '没有匹配的笔记。' : '还没有任何笔记。'
+        elements.empty.textContent = state.keyword ? '没有匹配的笔记。' : '努力加载中......'
       }
       elements.list.innerHTML = state.filteredNotes
         .map((note) => {
