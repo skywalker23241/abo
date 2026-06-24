@@ -35,6 +35,9 @@ importers:
       feed:
         specifier: ^5.1.0
         version: 5.1.0
+      glimm:
+        specifier: ^0.1.4
+        version: 0.1.4
       katex:
         specifier: ^0.16.22
         version: 0.16.22
@@ -2181,6 +2184,18 @@ packages:
 
   github-slugger@2.0.0:
     resolution: {integrity: sha512-IaOQ9puYtjrkq7Y0Ygl9KDZnrf/aiUJYUpVf89y8kyaxbRG7Y1SrX/jaumrv81vc61+kiMempujsM3Yw7w5qcw==}
+
+  glimm@0.1.4:
+    resolution: {integrity: sha512-OIfoxkEnayr2oQNG8MzAotjq1ZhND2PwQT/M2a16Z+vxQisxHXKWX1FihgAqQaRt2oWfFFZuBktoVHkho2w2jw==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      next: '>=14'
+      react: '>=18'
+    peerDependenciesMeta:
+      next:
+        optional: true
+      react:
+        optional: true
 
   glob-parent@5.1.2:
     resolution: {integrity: sha512-AOIgSQCepiJYwP3ARnGx+5VnTu2HBYdzbGP45eLw1vr3zB3vZLeyed1sC9hnbcOc9/SrMyM5RPQrkGz4aS9Zow==}
@@ -6598,6 +6613,8 @@ snapshots:
       resolve-pkg-maps: 1.0.0
 
   github-slugger@2.0.0: {}
+
+  glimm@0.1.4: {}
 
   glob-parent@5.1.2:
     dependencies:

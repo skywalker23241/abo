@@ -1,0 +1,111 @@
+<canvas id="glimm-page-transition" aria-hidden="true" transition:persist></canvas>
+
+<script>
+  import { navigate } from 'astro:transitions/client'
+  import { createShader, playSweep, type Direction, type PaletteName } from 'glimm'
+
+  declare global {
+    interface Window {
+      __glimmPageTransitionInstalled?: boolean
+    }
+  }
+
+  const canvas = document.getElementById('glimm-page-transition') as HTMLCanvasElement | null
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)')
+
+  const samePageHashLink = (url: URL) =>
+    url.pathname === window.location.pathname &&
+    url.search === window.location.search &&
+    Boolean(url.hash)
+
+  const shouldSkipLink = (link: HTMLAnchorElement, event: MouseEvent, url: URL) =>
+    event.button !== 0 ||
+    event.metaKey ||
+    event.ctrlKey ||
+    event.shiftKey ||
+    event.altKey ||
+    link.target === '_blank' ||
+    link.hasAttribute('download') ||
+    link.hasAttribute('data-glimm-skip') ||
+    link.hasAttribute('data-astro-reload') ||
+    url.origin !== window.location.origin ||
+    samePageHashLink(url)
+
+  if (canvas && !window.__glimmPageTransitionInstalled) {
+    window.__glimmPageTransitionInstalled = true
+
+    let activeSweep: ReturnType<typeof playSweep> | undefined
+    const shader = createShader({
+      canvas,
+      direction: 'ltr',
+      brightness: 0.92,
+      waveAmount: 0.85,
+      rippleAmount: 0.8,
+      swellAmount: 0.75
+    })
+
+    const directions: Direction[] = ['ltr', 'rtl', 'ttb', 'btt']
+    const palettes: PaletteName[] = ['lagoon', 'azure', 'berry', 'citrus', 'prism']
+    let transitionCount = 0
+
+    document.addEventListener(
+      'click',
+      (event) => {
+        const link = (event.target as Element | null)?.closest('a[href]')
+
+        if (!link || !(link instanceof HTMLAnchorElement)) {
+          return
+        }
+
+        const url = new URL(link.href)
+
+        if (!shader || prefersReducedMotion.matches || shouldSkipLink(link, event, url)) {
+          return
+        }
+
+        event.preventDefault()
+        event.stopImmediatePropagation()
+        activeSweep?.cancel()
+
+        const direction = directions[transitionCount % directions.length]
+        const palette = palettes[transitionCount % palettes.length]
+        transitionCount += 1
+
+        activeSweep = playSweep(shader, {
+          direction,
+          palette,
+          sweepMs: 820,
+          outroMs: 460,
+          midpoint: 0.52,
+          bandTight: 4.8,
+          easing: 'easeOutQuart',
+          peakAlpha: 0.96,
+          onMidpoint: () => navigate(url.href),
+          onComplete: () => {
+            activeSweep = undefined
+          }
+        })
+      },
+      { capture: true }
+    )
+  }
+</script>
+
+<style>
+  @supports (view-transition-name: none) {
+    ::view-transition-old(root),
+    ::view-transition-new(root) {
+      animation: none !important;
+    }
+  }
+
+  #glimm-page-transition {
+    position: fixed;
+    inset: 0;
+    z-index: 2147483647;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    contain: strict;
+  }
+</style>

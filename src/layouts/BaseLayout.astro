@@ -5,7 +5,7 @@ import { ClientRouter } from 'astro:transitions'
 import FaviconThemeSwitcher from '@/components/ui/FaviconThemeSwitcher.astro'
 import BackToTop from '@/components/ui/BackToTop.astro'
 import GiscusLoader from '@/components/widgets/GiscusLoader.astro'
-import TransitionWrapper from '@/components/layout/TransitionWrapper.astro'
+import GlimmPageTransition from '@/components/layout/GlimmPageTransition.astro'
 import type { LayoutProps } from '@/types'
 
 type Props = LayoutProps
@@ -18,25 +18,18 @@ const isPostLayout = type === 'post'
 
 <html lang={language}>
   <head>
-    {fadeAnimation && <ClientRouter />}
     <slot name="head" />
   </head>
   <body>
     <FaviconThemeSwitcher />
     {isPostLayout && <GiscusLoader />}
     <BackToTop />
+    {fadeAnimation && <GlimmPageTransition />}
+    {fadeAnimation && <ClientRouter />}
 
-    {
-      fadeAnimation ? (
-        <TransitionWrapper type={type} class="layout-wrapper">
-          <slot />
-        </TransitionWrapper>
-      ) : (
-        <div class="layout-wrapper">
-          <slot />
-        </div>
-      )
-    }
+    <div class="layout-wrapper">
+      <slot />
+    </div>
   </body>
 </html>
 
