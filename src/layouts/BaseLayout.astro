@@ -4,6 +4,13 @@ import { ClientRouter } from 'astro:transitions'
 
 import FaviconThemeSwitcher from '@/components/ui/FaviconThemeSwitcher.astro'
 import BackToTop from '@/components/ui/BackToTop.astro'
+import CopyCode from '@/components/ui/CopyCode.astro'
+import GitHubCard from '@/components/ui/GitHubCard.astro'
+import ImageOptimizer from '@/components/ui/ImageOptimizer.astro'
+import ImageViewer from '@/components/ui/ImageViewer.astro'
+import LinkCard from '@/components/ui/LinkCard.astro'
+import NeoDBCard from '@/components/ui/NeoDBCard.astro'
+import XPOST from '@/components/ui/XPOST.astro'
 import GiscusLoader from '@/components/widgets/GiscusLoader.astro'
 import GlimmPageTransition from '@/components/layout/GlimmPageTransition.astro'
 import type { LayoutProps } from '@/types'
@@ -39,6 +46,13 @@ const isPostLayout = type === 'post'
     <FaviconThemeSwitcher />
     {isPostLayout && <GiscusLoader />}
     <BackToTop />
+    <ImageOptimizer />
+    <CopyCode />
+    <GitHubCard />
+    <XPOST />
+    <NeoDBCard />
+    {themeConfig.post.imageViewer && <ImageViewer />}
+    {themeConfig.post.linkCard && <LinkCard />}
     {fadeAnimation && <GlimmPageTransition />}
     {fadeAnimation && <ClientRouter />}
 
