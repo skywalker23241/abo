@@ -19,7 +19,7 @@ export default [
   {
     rules: {
       'no-console': ['warn', { allow: ['warn', 'error'] }],
-      '@typescript-eslint/no-unused-vars': "off",
+      '@typescript-eslint/no-unused-vars': 'off',
       '@typescript-eslint/no-explicit-any': 'warn',
       'astro/no-set-html-directive': 'off'
     }
@@ -34,6 +34,7 @@ export default [
       '.env*',
       '.cache/**',
       '.astro/**',
+      '.netlify/**',
       '.DS_Store',
       'coverage/**'
     ]

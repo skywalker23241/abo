@@ -231,6 +231,10 @@ const isPostNav = Boolean(previousPostLink || nextPostLink)
 </style>
 
 <script>
+  function clearBottomNavPageTurn() {
+    document.documentElement.classList.remove('page-turning-previous', 'page-turning-next')
+  }
+
   function setupBottomNavPageTurn() {
     const links = document.querySelectorAll<HTMLAnchorElement>('.bottom-nav-link')
 
@@ -253,16 +257,15 @@ const isPostNav = Boolean(previousPostLink || nextPostLink)
         const href = link.href
         if (!href || href === window.location.href) return
 
-        event.preventDefault()
         const direction = link.dataset.pageDirection === 'previous' ? 'previous' : 'next'
+        clearBottomNavPageTurn()
         document.documentElement.classList.add(`page-turning-${direction}`)
-        window.setTimeout(() => {
-          window.location.href = href
-        }, 260)
       })
     })
   }
 
   setupBottomNavPageTurn()
   document.addEventListener('astro:page-load', setupBottomNavPageTurn)
+  document.addEventListener('astro:before-swap', clearBottomNavPageTurn)
+  document.addEventListener('astro:after-swap', clearBottomNavPageTurn)
 </script>

@@ -1,4 +1,5 @@
 <script is:inline>
+  /* eslint-disable no-var */
   // Assigned to a `var` (not a `class` declaration) so re-executing this inline
   // script during a view-transition navigation can't throw a re-declaration
   // SyntaxError — which would abort Astro's runScripts() and stop astro:page-load
@@ -43,8 +44,13 @@
 
   // Initialize favicon theme switcher
   function init() {
+    if (window.__faviconThemeSwitcherInstance) {
+      window.__faviconThemeSwitcherInstance.updateFavicon()
+      return
+    }
+
     try {
-      new FaviconThemeSwitcher()
+      window.__faviconThemeSwitcherInstance = new FaviconThemeSwitcher()
     } catch (error) {
       console.warn('Failed to initialize favicon theme switcher:', error)
     }

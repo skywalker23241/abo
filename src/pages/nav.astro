@@ -71,7 +71,8 @@ const getFavicon = (url: string) => {
 <script is:inline>
   function initNavSearch() {
     const searchInput = document.getElementById('nav-search')
-    if (!searchInput) return
+    if (!searchInput || searchInput.dataset.navSearchInit === '1') return
+    searchInput.dataset.navSearchInit = '1'
 
     const sections = document.querySelectorAll('.nav-section')
 
@@ -97,6 +98,7 @@ const getFavicon = (url: string) => {
   }
 
   // Initialize on load and after view transitions
+  initNavSearch()
   document.addEventListener('astro:page-load', initNavSearch)
 </script>
 

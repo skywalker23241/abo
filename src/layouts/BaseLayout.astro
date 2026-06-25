@@ -19,6 +19,7 @@ const isPostLayout = type === 'post'
 <html lang={language}>
   <head>
     <script is:inline>
+      /* eslint-disable no-var */
       // Make customElements.define idempotent so component scripts that get
       // re-executed during view-transition navigations (e.g. astro-theme-toggle)
       // don't throw "already defined" on every navigation.
@@ -26,9 +27,9 @@ const isPostLayout = type === 'post'
         if (window.__customElementsDefineGuarded) return
         window.__customElementsDefineGuarded = true
         var nativeDefine = customElements.define
-        customElements.define = function (name) {
+        customElements.define = function (name, ...args) {
           if (customElements.get(name)) return
-          return nativeDefine.apply(customElements, arguments)
+          return nativeDefine.call(customElements, name, ...args)
         }
       })()
     </script>

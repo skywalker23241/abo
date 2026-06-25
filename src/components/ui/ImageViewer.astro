@@ -11,6 +11,7 @@
     window.__imageViewerRegistered = true
 
     let currentKeydownHandler = null
+    let currentProseObserver = null
     let imageViewerInitPending = false
 
     function initImageViewer() {
@@ -102,12 +103,15 @@
 
       bindImageClickEvents()
 
+      currentProseObserver?.disconnect()
+      currentProseObserver = null
+
       const proseEl = document.querySelector('.prose')
       if (proseEl) {
-        const observer = new MutationObserver(function () {
+        currentProseObserver = new MutationObserver(function () {
           bindImageClickEvents()
         })
-        observer.observe(proseEl, {
+        currentProseObserver.observe(proseEl, {
           childList: true,
           subtree: true
         })

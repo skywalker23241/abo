@@ -1,4 +1,5 @@
 <script is:inline>
+  /* eslint-disable no-var */
   // `var` (not `let`) so re-executing this inline script during a view-transition
   // navigation can't throw a re-declaration SyntaxError that aborts runScripts().
   var neodbCardsSetupPending = false

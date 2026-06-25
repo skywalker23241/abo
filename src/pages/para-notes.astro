@@ -118,237 +118,245 @@ const pageDescription = '一个公开可读、私有可写的小型 memo zone。
   </div>
 
   <script>
-    const state = {
-      notes: [],
-      filteredNotes: [],
-      authenticated: false,
-      editingId: '',
-      busy: false,
-      keyword: ''
-    }
+    let paraNotesInitPending = false
+    let cleanupParaNotes = () => {}
 
-    const storageKey = 'para-notes-admin-passcode'
+    function initParaNotes() {
+      const page = document.querySelector('.para-notes-page')
+      if (!page || page.dataset.paraNotesInit === '1') return
+      page.dataset.paraNotesInit = '1'
 
-    const elements = {
-      editToggle: document.querySelector('#memo-edit-toggle'),
-      searchToggle: document.querySelector('#memo-search-toggle'),
-      editor: document.querySelector('#memo-editor'),
-      form: document.querySelector('#memo-form'),
-      formTitle: document.querySelector('#memo-form-title'),
-      memoId: document.querySelector('#memo-id'),
-      title: document.querySelector('#memo-title'),
-      content: document.querySelector('#memo-content'),
-      submit: document.querySelector('#memo-submit'),
-      cancelEdit: document.querySelector('#memo-cancel-edit'),
-      list: document.querySelector('#memo-list'),
-      empty: document.querySelector('#memo-empty'),
-      searchModal: document.querySelector('#memo-search-modal'),
-      searchInput: document.querySelector('#memo-search-input'),
-      passcodeModal: document.querySelector('#memo-passcode-modal'),
-      passcodeForm: document.querySelector('#memo-passcode-form'),
-      passcodeInput: document.querySelector('#memo-passcode-input')
-    }
-
-    let passcodeTimer = 0
-    let unlockAttemptId = 0
-
-    function escapeHtml(value) {
-      return value
-        .replaceAll('&', '&amp;')
-        .replaceAll('<', '&lt;')
-        .replaceAll('>', '&gt;')
-        .replaceAll('"', '&quot;')
-        .replaceAll("'", '&#39;')
-    }
-
-    function formatDate(value) {
-      const date = new Date(value)
-      if (Number.isNaN(date.getTime())) return ''
-      return new Intl.DateTimeFormat('zh-CN', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit'
-      }).format(date)
-    }
-
-    function setStatus(message, type = 'default') {
-      if (type === 'error' && elements.empty && state.filteredNotes.length === 0) {
-        elements.empty.textContent = message
+      const state = {
+        notes: [],
+        filteredNotes: [],
+        authenticated: false,
+        editingId: '',
+        busy: false,
+        keyword: ''
       }
-    }
 
-    function setBusy(busy) {
-      state.busy = busy
-      ;[
-        elements.editToggle,
-        elements.searchToggle,
-        elements.title,
-        elements.content,
-        elements.submit,
-        elements.cancelEdit,
-        elements.passcodeInput,
-        elements.searchInput
-      ].forEach((control) => {
-        if (
-          control instanceof HTMLButtonElement ||
-          control instanceof HTMLInputElement ||
-          control instanceof HTMLTextAreaElement
-        ) {
-          control.disabled = busy
-        }
-      })
-    }
+      const storageKey = 'para-notes-admin-passcode'
 
-    function showModal(kind) {
-      const modal = kind === 'search' ? elements.searchModal : elements.passcodeModal
-      modal?.removeAttribute('hidden')
-
-      window.setTimeout(() => {
-        if (kind === 'search' && elements.searchInput instanceof HTMLInputElement) {
-          elements.searchInput.focus()
-        }
-
-        if (kind === 'passcode' && elements.passcodeInput instanceof HTMLInputElement) {
-          elements.passcodeInput.focus()
-        }
-      }, 0)
-    }
-
-    function hideModal(kind) {
-      const modal = kind === 'search' ? elements.searchModal : elements.passcodeModal
-      if (kind === 'passcode') {
-        window.clearTimeout(passcodeTimer)
+      const elements = {
+        editToggle: document.querySelector('#memo-edit-toggle'),
+        searchToggle: document.querySelector('#memo-search-toggle'),
+        editor: document.querySelector('#memo-editor'),
+        form: document.querySelector('#memo-form'),
+        formTitle: document.querySelector('#memo-form-title'),
+        memoId: document.querySelector('#memo-id'),
+        title: document.querySelector('#memo-title'),
+        content: document.querySelector('#memo-content'),
+        submit: document.querySelector('#memo-submit'),
+        cancelEdit: document.querySelector('#memo-cancel-edit'),
+        list: document.querySelector('#memo-list'),
+        empty: document.querySelector('#memo-empty'),
+        searchModal: document.querySelector('#memo-search-modal'),
+        searchInput: document.querySelector('#memo-search-input'),
+        passcodeModal: document.querySelector('#memo-passcode-modal'),
+        passcodeForm: document.querySelector('#memo-passcode-form'),
+        passcodeInput: document.querySelector('#memo-passcode-input')
       }
-      modal?.setAttribute('hidden', '')
-    }
 
-    function getPasscode() {
-      if (elements.passcodeInput instanceof HTMLInputElement) {
-        return elements.passcodeInput.value.trim()
+      let passcodeTimer = 0
+      let unlockAttemptId = 0
+
+      function escapeHtml(value) {
+        return value
+          .replaceAll('&', '&amp;')
+          .replaceAll('<', '&lt;')
+          .replaceAll('>', '&gt;')
+          .replaceAll('"', '&quot;')
+          .replaceAll("'", '&#39;')
       }
-      return ''
-    }
 
-    async function unlockWithPasscode(passcode) {
-      const normalizedPasscode = passcode.trim()
-      if (!normalizedPasscode || state.authenticated) return
+      function formatDate(value) {
+        const date = new Date(value)
+        if (Number.isNaN(date.getTime())) return ''
+        return new Intl.DateTimeFormat('zh-CN', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit'
+        }).format(date)
+      }
 
-      const attemptId = ++unlockAttemptId
-
-      try {
-        if (elements.passcodeInput instanceof HTMLInputElement) {
-          elements.passcodeInput.setAttribute('aria-busy', 'true')
+      function setStatus(message, type = 'default') {
+        if (type === 'error' && elements.empty && state.filteredNotes.length === 0) {
+          elements.empty.textContent = message
         }
+      }
 
-        const response = await fetch('/api/para-notes', {
-          method: 'POST',
-          headers: {
-            'content-type': 'application/json'
-          },
-          body: JSON.stringify({
-            passcode: normalizedPasscode,
-            title: 'auth-check',
-            content: 'auth-check',
-            dryRun: true
-          })
+      function setBusy(busy) {
+        state.busy = busy
+        ;[
+          elements.editToggle,
+          elements.searchToggle,
+          elements.title,
+          elements.content,
+          elements.submit,
+          elements.cancelEdit,
+          elements.passcodeInput,
+          elements.searchInput
+        ].forEach((control) => {
+          if (
+            control instanceof HTMLButtonElement ||
+            control instanceof HTMLInputElement ||
+            control instanceof HTMLTextAreaElement
+          ) {
+            control.disabled = busy
+          }
         })
-
-        const data = await response.json().catch(() => ({}))
-        if (attemptId !== unlockAttemptId) return
-
-        if (!response.ok) {
-          if (response.status === 401) return
-          throw new Error(typeof data.error === 'string' ? data.error : 'invalid admin passcode')
-        }
-
-        if (getPasscode() !== normalizedPasscode) return
-
-        sessionStorage.setItem(storageKey, normalizedPasscode)
-        setAuthenticated(true)
-        hideModal('passcode')
-      } catch (error) {
-        if (attemptId !== unlockAttemptId) return
-        const message = error instanceof Error ? error.message : '管理员验证失败'
-        setStatus(message, 'error')
-      } finally {
-        if (attemptId === unlockAttemptId && elements.passcodeInput instanceof HTMLInputElement) {
-          elements.passcodeInput.removeAttribute('aria-busy')
-        }
-      }
-    }
-
-    function resetForm() {
-      state.editingId = ''
-      if (elements.formTitle) elements.formTitle.textContent = '新增笔记'
-      if (elements.memoId instanceof HTMLInputElement) elements.memoId.value = ''
-      if (elements.title instanceof HTMLInputElement) elements.title.value = ''
-      if (elements.content instanceof HTMLTextAreaElement) elements.content.value = ''
-      if (elements.submit instanceof HTMLButtonElement) elements.submit.textContent = 'Save'
-      if (elements.cancelEdit instanceof HTMLButtonElement) elements.cancelEdit.hidden = true
-    }
-
-    function beginEdit(note) {
-      state.editingId = note.id
-      if (elements.formTitle) elements.formTitle.textContent = '编辑笔记'
-      if (elements.memoId instanceof HTMLInputElement) elements.memoId.value = note.id
-      if (elements.title instanceof HTMLInputElement) elements.title.value = note.title
-      if (elements.content instanceof HTMLTextAreaElement) elements.content.value = note.content
-      if (elements.submit instanceof HTMLButtonElement) elements.submit.textContent = 'Update'
-      if (elements.cancelEdit instanceof HTMLButtonElement) elements.cancelEdit.hidden = false
-      elements.editor?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    }
-
-    function applySearch() {
-      const keyword = state.keyword.trim().toLowerCase()
-      state.filteredNotes = state.notes.filter((note) => {
-        if (!keyword) return true
-        return `${note.title}\n${note.content}`.toLowerCase().includes(keyword)
-      })
-      renderNotes()
-    }
-
-    function setAuthenticated(nextValue) {
-      state.authenticated = nextValue
-      elements.editor?.toggleAttribute('hidden', !nextValue)
-
-      if (elements.editToggle instanceof HTMLButtonElement) {
-        elements.editToggle.setAttribute('aria-label', nextValue ? '锁定编辑' : '编辑笔记')
-        elements.editToggle.classList.toggle('is-active', nextValue)
       }
 
-      if (!nextValue) {
-        sessionStorage.removeItem(storageKey)
+      function showModal(kind) {
+        const modal = kind === 'search' ? elements.searchModal : elements.passcodeModal
+        modal?.removeAttribute('hidden')
+
+        window.setTimeout(() => {
+          if (kind === 'search' && elements.searchInput instanceof HTMLInputElement) {
+            elements.searchInput.focus()
+          }
+
+          if (kind === 'passcode' && elements.passcodeInput instanceof HTMLInputElement) {
+            elements.passcodeInput.focus()
+          }
+        }, 0)
+      }
+
+      function hideModal(kind) {
+        const modal = kind === 'search' ? elements.searchModal : elements.passcodeModal
+        if (kind === 'passcode') {
+          window.clearTimeout(passcodeTimer)
+        }
+        modal?.setAttribute('hidden', '')
+      }
+
+      function getPasscode() {
         if (elements.passcodeInput instanceof HTMLInputElement) {
-          elements.passcodeInput.value = ''
+          return elements.passcodeInput.value.trim()
         }
-        hideModal('passcode')
-        resetForm()
+        return ''
       }
 
-      renderNotes()
-    }
+      async function unlockWithPasscode(passcode) {
+        const normalizedPasscode = passcode.trim()
+        if (!normalizedPasscode || state.authenticated) return
 
-    function renderNotes() {
-      if (!elements.list || !elements.empty) return
+        const attemptId = ++unlockAttemptId
 
-      elements.empty.hidden = state.filteredNotes.length !== 0
-      if (state.filteredNotes.length === 0) {
-        elements.empty.textContent = state.keyword ? '没有匹配的笔记。' : '努力加载中......'
+        try {
+          if (elements.passcodeInput instanceof HTMLInputElement) {
+            elements.passcodeInput.setAttribute('aria-busy', 'true')
+          }
+
+          const response = await fetch('/api/para-notes', {
+            method: 'POST',
+            headers: {
+              'content-type': 'application/json'
+            },
+            body: JSON.stringify({
+              passcode: normalizedPasscode,
+              title: 'auth-check',
+              content: 'auth-check',
+              dryRun: true
+            })
+          })
+
+          const data = await response.json().catch(() => ({}))
+          if (attemptId !== unlockAttemptId) return
+
+          if (!response.ok) {
+            if (response.status === 401) return
+            throw new Error(typeof data.error === 'string' ? data.error : 'invalid admin passcode')
+          }
+
+          if (getPasscode() !== normalizedPasscode) return
+
+          sessionStorage.setItem(storageKey, normalizedPasscode)
+          setAuthenticated(true)
+          hideModal('passcode')
+        } catch (error) {
+          if (attemptId !== unlockAttemptId) return
+          const message = error instanceof Error ? error.message : '管理员验证失败'
+          setStatus(message, 'error')
+        } finally {
+          if (attemptId === unlockAttemptId && elements.passcodeInput instanceof HTMLInputElement) {
+            elements.passcodeInput.removeAttribute('aria-busy')
+          }
+        }
       }
-      elements.list.innerHTML = state.filteredNotes
-        .map((note) => {
-          const actions = state.authenticated
-            ? `
+
+      function resetForm() {
+        state.editingId = ''
+        if (elements.formTitle) elements.formTitle.textContent = '新增笔记'
+        if (elements.memoId instanceof HTMLInputElement) elements.memoId.value = ''
+        if (elements.title instanceof HTMLInputElement) elements.title.value = ''
+        if (elements.content instanceof HTMLTextAreaElement) elements.content.value = ''
+        if (elements.submit instanceof HTMLButtonElement) elements.submit.textContent = 'Save'
+        if (elements.cancelEdit instanceof HTMLButtonElement) elements.cancelEdit.hidden = true
+      }
+
+      function beginEdit(note) {
+        state.editingId = note.id
+        if (elements.formTitle) elements.formTitle.textContent = '编辑笔记'
+        if (elements.memoId instanceof HTMLInputElement) elements.memoId.value = note.id
+        if (elements.title instanceof HTMLInputElement) elements.title.value = note.title
+        if (elements.content instanceof HTMLTextAreaElement) elements.content.value = note.content
+        if (elements.submit instanceof HTMLButtonElement) elements.submit.textContent = 'Update'
+        if (elements.cancelEdit instanceof HTMLButtonElement) elements.cancelEdit.hidden = false
+        elements.editor?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }
+
+      function applySearch() {
+        const keyword = state.keyword.trim().toLowerCase()
+        state.filteredNotes = state.notes.filter((note) => {
+          if (!keyword) return true
+          return `${note.title}\n${note.content}`.toLowerCase().includes(keyword)
+        })
+        renderNotes()
+      }
+
+      function setAuthenticated(nextValue) {
+        state.authenticated = nextValue
+        elements.editor?.toggleAttribute('hidden', !nextValue)
+
+        if (elements.editToggle instanceof HTMLButtonElement) {
+          elements.editToggle.setAttribute('aria-label', nextValue ? '锁定编辑' : '编辑笔记')
+          elements.editToggle.classList.toggle('is-active', nextValue)
+        }
+
+        if (!nextValue) {
+          sessionStorage.removeItem(storageKey)
+          if (elements.passcodeInput instanceof HTMLInputElement) {
+            elements.passcodeInput.value = ''
+          }
+          hideModal('passcode')
+          resetForm()
+        }
+
+        renderNotes()
+      }
+
+      function renderNotes() {
+        if (!elements.list || !elements.empty) return
+
+        elements.empty.hidden = state.filteredNotes.length !== 0
+        if (state.filteredNotes.length === 0) {
+          elements.empty.textContent = state.keyword ? '没有匹配的笔记。' : '努力加载中......'
+        }
+        elements.list.innerHTML = state.filteredNotes
+          .map((note) => {
+            const actions = state.authenticated
+              ? `
               <div class="memo-actions">
                 <button class="ghost-text-button" type="button" data-action="edit" data-id="${note.id}">Edit</button>
                 <button class="ghost-text-button danger-button" type="button" data-action="delete" data-id="${note.id}">Delete</button>
               </div>
             `
-            : ''
+              : ''
 
-          return `
+            return `
             <article class="memo-card">
               <div class="memo-card-head">
                 <div>
@@ -360,182 +368,211 @@ const pageDescription = '一个公开可读、私有可写的小型 memo zone。
               <p class="memo-content">${escapeHtml(note.content).replaceAll('\n', '<br />')}</p>
             </article>
           `
-        })
-        .join('')
-    }
-
-    async function loadNotes() {
-      try {
-        const response = await fetch('/api/para-notes')
-        const data = await response.json()
-        state.notes = Array.isArray(data.notes) ? data.notes : []
-        applySearch()
-      } catch {
-        setStatus('加载笔记失败，请稍后重试。', 'error')
+          })
+          .join('')
       }
-    }
 
-    async function request(method, payload) {
-      setBusy(true)
+      async function loadNotes() {
+        try {
+          const response = await fetch('/api/para-notes')
+          const data = await response.json()
+          state.notes = Array.isArray(data.notes) ? data.notes : []
+          applySearch()
+        } catch {
+          setStatus('加载笔记失败，请稍后重试。', 'error')
+        }
+      }
 
-      try {
-        const response = await fetch('/api/para-notes', {
-          method,
-          headers: {
-            'content-type': 'application/json'
-          },
-          body: JSON.stringify(payload)
-        })
+      async function request(method, payload) {
+        setBusy(true)
 
-        const data = await response.json().catch(() => ({}))
-        if (!response.ok) {
-          throw new Error(typeof data.error === 'string' ? data.error : 'request failed')
+        try {
+          const response = await fetch('/api/para-notes', {
+            method,
+            headers: {
+              'content-type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+          })
+
+          const data = await response.json().catch(() => ({}))
+          if (!response.ok) {
+            throw new Error(typeof data.error === 'string' ? data.error : 'request failed')
+          }
+
+          state.notes = Array.isArray(data.notes) ? data.notes : state.notes
+          applySearch()
+          return data
+        } finally {
+          setBusy(false)
+        }
+      }
+
+      elements.searchToggle?.addEventListener('click', () => {
+        showModal('search')
+      })
+
+      elements.editToggle?.addEventListener('click', () => {
+        if (state.authenticated) {
+          setAuthenticated(false)
+          setStatus('已退出编辑模式。')
+          return
         }
 
-        state.notes = Array.isArray(data.notes) ? data.notes : state.notes
+        showModal('passcode')
+      })
+
+      elements.searchInput?.addEventListener('input', () => {
+        if (!(elements.searchInput instanceof HTMLInputElement)) return
+        state.keyword = elements.searchInput.value
         applySearch()
-        return data
-      } finally {
-        setBusy(false)
-      }
-    }
+      })
 
-    elements.searchToggle?.addEventListener('click', () => {
-      showModal('search')
-    })
+      elements.passcodeForm?.addEventListener('submit', (event) => {
+        event.preventDefault()
+      })
 
-    elements.editToggle?.addEventListener('click', () => {
-      if (state.authenticated) {
-        setAuthenticated(false)
-        setStatus('已退出编辑模式。')
-        return
-      }
+      elements.passcodeInput?.addEventListener('input', () => {
+        window.clearTimeout(passcodeTimer)
 
-      showModal('passcode')
-    })
+        if (!getPasscode()) return
 
-    elements.searchInput?.addEventListener('input', () => {
-      if (!(elements.searchInput instanceof HTMLInputElement)) return
-      state.keyword = elements.searchInput.value
-      applySearch()
-    })
+        passcodeTimer = window.setTimeout(() => {
+          unlockWithPasscode(getPasscode())
+        }, 320)
+      })
 
-    elements.passcodeForm?.addEventListener('submit', (event) => {
-      event.preventDefault()
-    })
+      elements.form?.addEventListener('submit', async (event) => {
+        event.preventDefault()
 
-    elements.passcodeInput?.addEventListener('input', () => {
-      window.clearTimeout(passcodeTimer)
-
-      if (!getPasscode()) return
-
-      passcodeTimer = window.setTimeout(() => {
-        unlockWithPasscode(getPasscode())
-      }, 320)
-    })
-
-    elements.form?.addEventListener('submit', async (event) => {
-      event.preventDefault()
-
-      const passcode = getPasscode() || sessionStorage.getItem(storageKey) || ''
-      const title = elements.title instanceof HTMLInputElement ? elements.title.value.trim() : ''
-      const content =
-        elements.content instanceof HTMLTextAreaElement ? elements.content.value.trim() : ''
-
-      if (!passcode) {
-        setStatus('缺少管理员口令。', 'error')
-        return
-      }
-
-      if (!title || !content) {
-        setStatus('标题和内容不能为空。', 'error')
-        return
-      }
-
-      try {
-        if (state.editingId) {
-          await request('PUT', { id: state.editingId, title, content, passcode })
-          setStatus('笔记已更新。')
-        } else {
-          await request('POST', { title, content, passcode })
-          setStatus('笔记已保存。')
-        }
-
-        resetForm()
-      } catch (error) {
-        const message = error instanceof Error ? error.message : '保存失败'
-        setStatus(message, 'error')
-      }
-    })
-
-    elements.cancelEdit?.addEventListener('click', () => {
-      resetForm()
-      setStatus('已取消编辑。')
-    })
-
-    elements.list?.addEventListener('click', async (event) => {
-      const target = event.target
-      if (!(target instanceof HTMLElement)) return
-
-      const action = target.dataset.action
-      const id = target.dataset.id
-      if (!action || !id) return
-
-      const note = state.notes.find((item) => item.id === id)
-      if (!note) return
-
-      if (action === 'edit') {
-        beginEdit(note)
-        return
-      }
-
-      if (action === 'delete') {
         const passcode = getPasscode() || sessionStorage.getItem(storageKey) || ''
+        const title = elements.title instanceof HTMLInputElement ? elements.title.value.trim() : ''
+        const content =
+          elements.content instanceof HTMLTextAreaElement ? elements.content.value.trim() : ''
+
         if (!passcode) {
           setStatus('缺少管理员口令。', 'error')
           return
         }
 
-        const confirmed = window.confirm(`Delete memo "${note.title}"?`)
-        if (!confirmed) return
+        if (!title || !content) {
+          setStatus('标题和内容不能为空。', 'error')
+          return
+        }
 
         try {
-          await request('DELETE', { id, passcode })
-          if (state.editingId === id) resetForm()
-          setStatus('笔记已删除。')
+          if (state.editingId) {
+            await request('PUT', { id: state.editingId, title, content, passcode })
+            setStatus('笔记已更新。')
+          } else {
+            await request('POST', { title, content, passcode })
+            setStatus('笔记已保存。')
+          }
+
+          resetForm()
         } catch (error) {
-          const message = error instanceof Error ? error.message : '删除失败'
+          const message = error instanceof Error ? error.message : '保存失败'
           setStatus(message, 'error')
         }
+      })
+
+      elements.cancelEdit?.addEventListener('click', () => {
+        resetForm()
+        setStatus('已取消编辑。')
+      })
+
+      elements.list?.addEventListener('click', async (event) => {
+        const target = event.target
+        if (!(target instanceof HTMLElement)) return
+
+        const action = target.dataset.action
+        const id = target.dataset.id
+        if (!action || !id) return
+
+        const note = state.notes.find((item) => item.id === id)
+        if (!note) return
+
+        if (action === 'edit') {
+          beginEdit(note)
+          return
+        }
+
+        if (action === 'delete') {
+          const passcode = getPasscode() || sessionStorage.getItem(storageKey) || ''
+          if (!passcode) {
+            setStatus('缺少管理员口令。', 'error')
+            return
+          }
+
+          const confirmed = window.confirm(`Delete memo "${note.title}"?`)
+          if (!confirmed) return
+
+          try {
+            await request('DELETE', { id, passcode })
+            if (state.editingId === id) resetForm()
+            setStatus('笔记已删除。')
+          } catch (error) {
+            const message = error instanceof Error ? error.message : '删除失败'
+            setStatus(message, 'error')
+          }
+        }
+      })
+
+      const handleDocumentClick = (event) => {
+        const target = event.target
+        if (!(target instanceof HTMLElement)) return
+
+        const kind = target.dataset.closeModal
+        if (kind === 'search' || kind === 'passcode') {
+          hideModal(kind)
+        }
       }
-    })
 
-    document.addEventListener('click', (event) => {
-      const target = event.target
-      if (!(target instanceof HTMLElement)) return
-
-      const kind = target.dataset.closeModal
-      if (kind === 'search' || kind === 'passcode') {
-        hideModal(kind)
+      const handleDocumentKeydown = (event) => {
+        if (event.key !== 'Escape') return
+        hideModal('search')
+        hideModal('passcode')
       }
-    })
 
-    document.addEventListener('keydown', (event) => {
-      if (event.key !== 'Escape') return
-      hideModal('search')
-      hideModal('passcode')
-    })
+      document.addEventListener('click', handleDocumentClick)
+      document.addEventListener('keydown', handleDocumentKeydown)
 
-    const rememberedPasscode = sessionStorage.getItem(storageKey)
-    if (rememberedPasscode && elements.passcodeInput instanceof HTMLInputElement) {
-      elements.passcodeInput.value = rememberedPasscode
-      setAuthenticated(true)
-      setStatus('已恢复编辑模式。')
-    } else {
-      setAuthenticated(false)
+      const rememberedPasscode = sessionStorage.getItem(storageKey)
+      if (rememberedPasscode && elements.passcodeInput instanceof HTMLInputElement) {
+        elements.passcodeInput.value = rememberedPasscode
+        setAuthenticated(true)
+        setStatus('已恢复编辑模式。')
+      } else {
+        setAuthenticated(false)
+      }
+
+      loadNotes()
+
+      cleanupParaNotes = () => {
+        window.clearTimeout(passcodeTimer)
+        unlockAttemptId += 1
+        document.removeEventListener('click', handleDocumentClick)
+        document.removeEventListener('keydown', handleDocumentKeydown)
+        page.dataset.paraNotesInit = '0'
+      }
     }
 
-    loadNotes()
+    function scheduleParaNotesInit() {
+      if (paraNotesInitPending) return
+      paraNotesInitPending = true
+      requestAnimationFrame(() => {
+        paraNotesInitPending = false
+        initParaNotes()
+      })
+    }
+
+    scheduleParaNotesInit()
+    document.addEventListener('astro:after-swap', scheduleParaNotesInit)
+    document.addEventListener('astro:page-load', scheduleParaNotesInit)
+    document.addEventListener('astro:before-swap', () => {
+      cleanupParaNotes()
+      cleanupParaNotes = () => {}
+    })
   </script>
 </IndexLayout>
 

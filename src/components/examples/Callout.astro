@@ -194,10 +194,14 @@ const { type = 'note', title = '', collapsible = false, open = false } = Astro.p
 </style>
 
 <script>
-  // 动态设置 max-height，更精准的折叠动画
-  document.addEventListener('DOMContentLoaded', () => {
+  let calloutInitPending = false
+
+  function initCallouts() {
     const allCallouts = document.querySelectorAll('.callout')
     allCallouts.forEach((details) => {
+      if (details instanceof HTMLElement && details.dataset.calloutInit === '1') return
+      if (details instanceof HTMLElement) details.dataset.calloutInit = '1'
+
       // 明确指定 details 的类型为 HTMLDetailsElement
       const detailElement = details as HTMLDetailsElement
       const content = detailElement.querySelector('.callout-content') as HTMLElement | null
@@ -226,5 +230,22 @@ const { type = 'note', title = '', collapsible = false, open = false } = Astro.p
       // 初始化状态
       updateHeight()
     })
-  })
+  }
+
+  function scheduleCalloutInit() {
+    if (calloutInitPending) return
+    calloutInitPending = true
+    requestAnimationFrame(() => {
+      calloutInitPending = false
+      initCallouts()
+    })
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', scheduleCalloutInit, { once: true })
+  } else {
+    scheduleCalloutInit()
+  }
+  document.addEventListener('astro:after-swap', scheduleCalloutInit)
+  document.addEventListener('astro:page-load', scheduleCalloutInit)
 </script>

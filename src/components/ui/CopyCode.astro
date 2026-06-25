@@ -1,4 +1,5 @@
 <script is:inline>
+  /* eslint-disable no-var */
   // `var` (not `let`/`const` from define:vars) so re-executing this inline script
   // during a view-transition navigation can't throw a re-declaration SyntaxError
   // that aborts runScripts(). The enabled flag is read from the server-rendered
