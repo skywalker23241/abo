@@ -94,10 +94,11 @@
         }
       })
 
-      // page-load fires only after the swap AND runScripts() have completed — i.e.
-      // every component script (inline + bundled module) has executed and
-      // initialised. Revealing here guarantees we uncover a fully-ready page.
-      document.addEventListener('astro:page-load', () => {
+      // Reveal once the DOM has been swapped. We use after-swap (not page-load)
+      // because it fires before runScripts() — so even if a swapped-in script
+      // throws, the cover still lifts instead of freezing on screen. The new DOM
+      // is already in place here; components finish initializing under the band.
+      document.addEventListener('astro:after-swap', () => {
         if (!covering) return
         covering = false
         activeSweep = playSweep(shader, {

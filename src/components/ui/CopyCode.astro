@@ -1,9 +1,9 @@
----
-import { themeConfig } from '@/config'
----
-
-<script is:inline define:vars={{ copyCode: themeConfig.post.copyCode }}>
-  let copyCodeInitPending = false
+<script is:inline>
+  // `var` (not `let`/`const` from define:vars) so re-executing this inline script
+  // during a view-transition navigation can't throw a re-declaration SyntaxError
+  // that aborts runScripts(). The enabled flag is read from the server-rendered
+  // `data-copy-code` attribute on <body> instead of a define:vars const.
+  var copyCodeInitPending = false
 
   function initCopyCode() {
     const copyIcon = `
@@ -19,9 +19,7 @@ import { themeConfig } from '@/config'
       </svg>
     `
 
-    document.body.setAttribute('data-copy-code', copyCode ? 'enabled' : 'disabled')
-
-    if (!copyCode) {
+    if (document.body.dataset.copyCode === 'disabled') {
       return
     }
 
@@ -131,10 +129,13 @@ import { themeConfig } from '@/config'
     })
   }
 
-  scheduleCopyCodeInit()
-  document.addEventListener('astro:after-swap', scheduleCopyCodeInit)
-  document.addEventListener('astro:page-load', scheduleCopyCodeInit)
-  document.addEventListener('DOMContentLoaded', scheduleCopyCodeInit)
+  if (!window.__copyCodeInstalled) {
+    window.__copyCodeInstalled = true
+    scheduleCopyCodeInit()
+    document.addEventListener('astro:after-swap', scheduleCopyCodeInit)
+    document.addEventListener('astro:page-load', scheduleCopyCodeInit)
+    document.addEventListener('DOMContentLoaded', scheduleCopyCodeInit)
+  }
 </script>
 
 <style is:inline>

@@ -1,5 +1,7 @@
 <script is:inline>
-  let neodbCardsSetupPending = false
+  // `var` (not `let`) so re-executing this inline script during a view-transition
+  // navigation can't throw a re-declaration SyntaxError that aborts runScripts().
+  var neodbCardsSetupPending = false
 
   function loadNeoDBCards() {
     const allContainers = document.querySelectorAll('.neodb-card-container')
@@ -215,9 +217,12 @@
     })
   }
 
-  scheduleNeoDBCards()
-  document.addEventListener('astro:after-swap', scheduleNeoDBCards)
-  document.addEventListener('astro:page-load', scheduleNeoDBCards)
+  if (!window.__neodbCardsInstalled) {
+    window.__neodbCardsInstalled = true
+    scheduleNeoDBCards()
+    document.addEventListener('astro:after-swap', scheduleNeoDBCards)
+    document.addEventListener('astro:page-load', scheduleNeoDBCards)
+  }
 </script>
 
 <style is:inline>

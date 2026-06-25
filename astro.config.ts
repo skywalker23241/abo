@@ -21,6 +21,10 @@ import robotsTxt from 'astro-robots-txt'
 export default defineConfig({
   adapter: netlify(), // Set adapter for deployment, or set `linkCard` to `false` in `src/config.ts`
   site: themeConfig.site.website,
+  prefetch: {
+    prefetchAll: true,
+    defaultStrategy: 'hover'
+  },
   image: {
     service: {
       entrypoint: 'astro/assets/services/sharp',

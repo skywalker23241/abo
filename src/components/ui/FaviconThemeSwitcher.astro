@@ -1,5 +1,9 @@
 <script is:inline>
-  class FaviconThemeSwitcher {
+  // Assigned to a `var` (not a `class` declaration) so re-executing this inline
+  // script during a view-transition navigation can't throw a re-declaration
+  // SyntaxError — which would abort Astro's runScripts() and stop astro:page-load
+  // from firing, breaking every other component's initialization.
+  var FaviconThemeSwitcher = class {
     constructor() {
       this.faviconLink =
         document.querySelector('link[rel="icon"][type="image/png"]') ||
@@ -46,13 +50,16 @@
     }
   }
 
-  // Initialize when DOM is ready
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init)
-  } else {
-    init()
+  // Initialize when DOM is ready, and re-initialize on every Astro page load.
+  // Guarded so re-executing this inline script on navigation doesn't stack
+  // duplicate listeners/observers.
+  if (!window.__faviconThemeSwitcherInstalled) {
+    window.__faviconThemeSwitcherInstalled = true
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init)
+    } else {
+      init()
+    }
+    document.addEventListener('astro:page-load', init)
   }
-
-  // Re-initialize on Astro page loads
-  document.addEventListener('astro:page-load', init)
 </script>
