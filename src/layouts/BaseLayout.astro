@@ -44,6 +44,7 @@ const isPostLayout = type === 'post'
   </head>
   <body data-copy-code={themeConfig.post.copyCode ? 'enabled' : 'disabled'}>
     <FaviconThemeSwitcher />
+    <script src="/scripts/para-notes.js" defer></script>
     {isPostLayout && <GiscusLoader />}
     <BackToTop />
     <ImageOptimizer />
