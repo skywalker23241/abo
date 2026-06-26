@@ -193,59 +193,69 @@ const { type = 'note', title = '', collapsible = false, open = false } = Astro.p
   }
 </style>
 
-<script>
-  let calloutInitPending = false
+<script is:inline>
+  ;(function () {
+    const state = (window.__calloutState ||= {
+      initPending: false,
+      installed: false
+    })
 
-  function initCallouts() {
-    const allCallouts = document.querySelectorAll('.callout')
-    allCallouts.forEach((details) => {
-      if (details instanceof HTMLElement && details.dataset.calloutInit === '1') return
-      if (details instanceof HTMLElement) details.dataset.calloutInit = '1'
+    function initCallouts() {
+      const allCallouts = document.querySelectorAll('.callout')
+      allCallouts.forEach((details) => {
+        if (details instanceof HTMLElement && details.dataset.calloutInit === '1') return
+        if (details instanceof HTMLElement) details.dataset.calloutInit = '1'
 
-      // 明确指定 details 的类型为 HTMLDetailsElement
-      const detailElement = details as HTMLDetailsElement
-      const content = detailElement.querySelector('.callout-content') as HTMLElement | null
+        const detailElement = details
+        const content = detailElement.querySelector('.callout-content')
 
-      if (!content) return
+        if (!content) return
 
-      // 初始化内容样式
-      content.style.transition = 'max-height 0.3s ease, margin-top 0.3s ease, opacity 0.3s ease'
-      content.style.overflow = 'hidden'
+        // 初始化内容样式
+        content.style.transition = 'max-height 0.3s ease, margin-top 0.3s ease, opacity 0.3s ease'
+        content.style.overflow = 'hidden'
 
-      const updateHeight = () => {
-        if (detailElement.open) {
-          content.style.maxHeight = content.scrollHeight + 'px'
-          content.style.marginTop = '0.5rem'
-          content.style.opacity = '1'
-        } else {
-          content.style.maxHeight = '0'
-          content.style.marginTop = '0'
-          content.style.opacity = '0'
+        const updateHeight = () => {
+          if (detailElement.open) {
+            content.style.maxHeight = content.scrollHeight + 'px'
+            content.style.marginTop = '0.5rem'
+            content.style.opacity = '1'
+          } else {
+            content.style.maxHeight = '0'
+            content.style.marginTop = '0'
+            content.style.opacity = '0'
+          }
         }
-      }
 
-      // 监听 toggle 事件
-      detailElement.addEventListener('toggle', updateHeight)
+        // 监听 toggle 事件
+        detailElement.addEventListener('toggle', updateHeight)
 
-      // 初始化状态
-      updateHeight()
-    })
-  }
+        // 初始化状态
+        updateHeight()
+      })
+    }
 
-  function scheduleCalloutInit() {
-    if (calloutInitPending) return
-    calloutInitPending = true
-    requestAnimationFrame(() => {
-      calloutInitPending = false
-      initCallouts()
-    })
-  }
+    function scheduleCalloutInit() {
+      if (state.initPending) return
+      state.initPending = true
+      requestAnimationFrame(() => {
+        state.initPending = false
+        initCallouts()
+      })
+    }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', scheduleCalloutInit, { once: true })
-  } else {
-    scheduleCalloutInit()
-  }
-  document.addEventListener('astro:after-swap', scheduleCalloutInit)
-  document.addEventListener('astro:page-load', scheduleCalloutInit)
+    window.__scheduleCalloutInit = scheduleCalloutInit
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', scheduleCalloutInit, { once: true })
+    } else {
+      scheduleCalloutInit()
+    }
+
+    if (!state.installed) {
+      state.installed = true
+      document.addEventListener('astro:after-swap', scheduleCalloutInit)
+      document.addEventListener('astro:page-load', scheduleCalloutInit)
+    }
+  })()
 </script>

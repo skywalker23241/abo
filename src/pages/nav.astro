@@ -69,37 +69,48 @@ const getFavicon = (url: string) => {
 </IndexLayout>
 
 <script is:inline>
-  function initNavSearch() {
-    const searchInput = document.getElementById('nav-search')
-    if (!searchInput || searchInput.dataset.navSearchInit === '1') return
-    searchInput.dataset.navSearchInit = '1'
-
-    const sections = document.querySelectorAll('.nav-section')
-
-    searchInput.addEventListener('input', (e) => {
-      const query = e.target.value.toLowerCase().trim()
-
-      sections.forEach((section) => {
-        const items = section.querySelectorAll('.nav-item')
-        let hasVisibleItem = false
-
-        items.forEach((item) => {
-          const name = item.querySelector('span').textContent.toLowerCase()
-          const url = item.getAttribute('href').toLowerCase()
-          const isMatch = name.includes(query) || url.includes(query)
-
-          item.style.display = isMatch ? 'flex' : 'none'
-          if (isMatch) hasVisibleItem = true
-        })
-
-        section.style.display = hasVisibleItem ? 'block' : 'none'
-      })
+  ;(function () {
+    const state = (window.__navSearchState ||= {
+      installed: false
     })
-  }
 
-  // Initialize on load and after view transitions
-  initNavSearch()
-  document.addEventListener('astro:page-load', initNavSearch)
+    function initNavSearch() {
+      const searchInput = document.getElementById('nav-search')
+      if (!searchInput || searchInput.dataset.navSearchInit === '1') return
+      searchInput.dataset.navSearchInit = '1'
+
+      const sections = document.querySelectorAll('.nav-section')
+
+      searchInput.addEventListener('input', (e) => {
+        const query = e.target.value.toLowerCase().trim()
+
+        sections.forEach((section) => {
+          const items = section.querySelectorAll('.nav-item')
+          let hasVisibleItem = false
+
+          items.forEach((item) => {
+            const name = item.querySelector('span').textContent.toLowerCase()
+            const url = item.getAttribute('href').toLowerCase()
+            const isMatch = name.includes(query) || url.includes(query)
+
+            item.style.display = isMatch ? 'flex' : 'none'
+            if (isMatch) hasVisibleItem = true
+          })
+
+          section.style.display = hasVisibleItem ? 'block' : 'none'
+        })
+      })
+    }
+
+    // Initialize on load and after view transitions
+    window.__initNavSearch = initNavSearch
+    initNavSearch()
+
+    if (!state.installed) {
+      state.installed = true
+      document.addEventListener('astro:page-load', initNavSearch)
+    }
+  })()
 </script>
 
 <style>

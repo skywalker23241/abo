@@ -539,103 +539,115 @@ const quickNavLinks = [
   }
 </style>
 
-<script>
-  function setupHeaderScrollState() {
-    const header = document.querySelector<HTMLElement>('.site-header')
-    if (!header || header.dataset.scrollStateBound === 'true') return
-    header.dataset.scrollStateBound = 'true'
-
-    const syncScrolledState = () => {
-      header.classList.toggle('is-scrolled', window.scrollY > 12)
-    }
-
-    syncScrolledState()
-    window.addEventListener('scroll', syncScrolledState, { passive: true })
-    document.addEventListener('astro:before-swap', () => {
-      window.removeEventListener('scroll', syncScrolledState)
+<script is:inline>
+  ;(function () {
+    const state = (window.__headerState ||= {
+      installed: false
     })
-  }
 
-  setupHeaderScrollState()
-  document.addEventListener('astro:page-load', setupHeaderScrollState)
+    function setupHeaderScrollState() {
+      const header = document.querySelector('.site-header')
+      if (!header || header.dataset.scrollStateBound === 'true') return
+      header.dataset.scrollStateBound = 'true'
 
-  function setupQuickNav() {
-    const root = document.querySelector<HTMLElement>('[data-quick-nav]')
-    const toggle = root?.querySelector<HTMLButtonElement>('[data-quick-nav-toggle]')
-    const backdrop = document.querySelector<HTMLButtonElement>('[data-quick-nav-backdrop]')
-    const panel = document.querySelector<HTMLElement>('[data-quick-nav-panel]')
-    const closeButtons = document.querySelectorAll<HTMLButtonElement>('[data-quick-nav-close]')
-    if (
-      !root ||
-      !toggle ||
-      !backdrop ||
-      !panel ||
-      !closeButtons ||
-      root.dataset.quickNavBound === 'true'
-    )
-      return
+      const syncScrolledState = () => {
+        header.classList.toggle('is-scrolled', window.scrollY > 12)
+      }
 
-    root.dataset.quickNavBound = 'true'
-
-    const setOpen = (open: boolean) => {
-      toggle.setAttribute('aria-expanded', String(open))
-      toggle.setAttribute('aria-label', open ? '关闭快速导航' : '打开快速导航')
-      backdrop.hidden = !open
-      panel.hidden = !open
-      document.documentElement.classList.toggle('quick-nav-open', open)
+      syncScrolledState()
+      window.addEventListener('scroll', syncScrolledState, { passive: true })
+      document.addEventListener('astro:before-swap', () => {
+        window.removeEventListener('scroll', syncScrolledState)
+      })
     }
 
-    const isOpen = () => toggle.getAttribute('aria-expanded') === 'true'
+    setupHeaderScrollState()
 
-    const handleToggleClick = () => {
-      setOpen(!isOpen())
+    function setupQuickNav() {
+      const root = document.querySelector('[data-quick-nav]')
+      const toggle = root?.querySelector('[data-quick-nav-toggle]')
+      const backdrop = document.querySelector('[data-quick-nav-backdrop]')
+      const panel = document.querySelector('[data-quick-nav-panel]')
+      const closeButtons = document.querySelectorAll('[data-quick-nav-close]')
+      if (
+        !root ||
+        !toggle ||
+        !backdrop ||
+        !panel ||
+        !closeButtons ||
+        root.dataset.quickNavBound === 'true'
+      )
+        return
+
+      root.dataset.quickNavBound = 'true'
+
+      const setOpen = (open) => {
+        toggle.setAttribute('aria-expanded', String(open))
+        toggle.setAttribute('aria-label', open ? '关闭快速导航' : '打开快速导航')
+        backdrop.hidden = !open
+        panel.hidden = !open
+        document.documentElement.classList.toggle('quick-nav-open', open)
+      }
+
+      const isOpen = () => toggle.getAttribute('aria-expanded') === 'true'
+
+      const handleToggleClick = () => {
+        setOpen(!isOpen())
+      }
+
+      const handleCloseClick = () => {
+        setOpen(false)
+        toggle.focus()
+      }
+
+      const handleDocumentClick = (event) => {
+        const target = event.target
+        if (!isOpen() || toggle.contains(target) || panel.contains(target)) return
+
+        setOpen(false)
+      }
+
+      const handleKeydown = (event) => {
+        if (event.key !== 'Escape' || !isOpen()) return
+
+        setOpen(false)
+        toggle.focus()
+      }
+
+      const handlePanelClick = (event) => {
+        const target = event.target
+        if (target.closest('a')) setOpen(false)
+      }
+
+      const cleanup = () => {
+        setOpen(false)
+        toggle.removeEventListener('click', handleToggleClick)
+        panel.removeEventListener('click', handlePanelClick)
+        document.removeEventListener('click', handleDocumentClick)
+        document.removeEventListener('keydown', handleKeydown)
+        backdrop.removeEventListener('click', handleCloseClick)
+        closeButtons.forEach((button) => button.removeEventListener('click', handleCloseClick))
+        document.documentElement.classList.remove('quick-nav-open')
+        root.dataset.quickNavBound = 'false'
+      }
+
+      toggle.addEventListener('click', handleToggleClick)
+      backdrop.addEventListener('click', handleCloseClick)
+      closeButtons.forEach((button) => button.addEventListener('click', handleCloseClick))
+      panel.addEventListener('click', handlePanelClick)
+      document.addEventListener('click', handleDocumentClick)
+      document.addEventListener('keydown', handleKeydown)
+      document.addEventListener('astro:before-swap', cleanup, { once: true })
     }
 
-    const handleCloseClick = () => {
-      setOpen(false)
-      toggle.focus()
+    window.__setupHeaderScrollState = setupHeaderScrollState
+    window.__setupQuickNav = setupQuickNav
+    setupQuickNav()
+
+    if (!state.installed) {
+      state.installed = true
+      document.addEventListener('astro:page-load', setupHeaderScrollState)
+      document.addEventListener('astro:page-load', setupQuickNav)
     }
-
-    const handleDocumentClick = (event: MouseEvent) => {
-      const target = event.target as Node
-      if (!isOpen() || toggle.contains(target) || panel.contains(target)) return
-
-      setOpen(false)
-    }
-
-    const handleKeydown = (event: KeyboardEvent) => {
-      if (event.key !== 'Escape' || !isOpen()) return
-
-      setOpen(false)
-      toggle.focus()
-    }
-
-    const handlePanelClick = (event: MouseEvent) => {
-      const target = event.target as HTMLElement
-      if (target.closest('a')) setOpen(false)
-    }
-
-    const cleanup = () => {
-      setOpen(false)
-      toggle.removeEventListener('click', handleToggleClick)
-      panel.removeEventListener('click', handlePanelClick)
-      document.removeEventListener('click', handleDocumentClick)
-      document.removeEventListener('keydown', handleKeydown)
-      backdrop.removeEventListener('click', handleCloseClick)
-      closeButtons.forEach((button) => button.removeEventListener('click', handleCloseClick))
-      document.documentElement.classList.remove('quick-nav-open')
-      root.dataset.quickNavBound = 'false'
-    }
-
-    toggle.addEventListener('click', handleToggleClick)
-    backdrop.addEventListener('click', handleCloseClick)
-    closeButtons.forEach((button) => button.addEventListener('click', handleCloseClick))
-    panel.addEventListener('click', handlePanelClick)
-    document.addEventListener('click', handleDocumentClick)
-    document.addEventListener('keydown', handleKeydown)
-    document.addEventListener('astro:before-swap', cleanup, { once: true })
-  }
-
-  setupQuickNav()
-  document.addEventListener('astro:page-load', setupQuickNav)
+  })()
 </script>

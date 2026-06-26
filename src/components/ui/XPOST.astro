@@ -1,39 +1,53 @@
-<script>
-  let xCardsSetupPending = false
+<script is:inline>
+  ;(function () {
+    const state = (window.__xPostState ||= {
+      setupPending: false,
+      installed: false
+    })
 
-  function loadXCards() {
-    const xCards = document.querySelectorAll('.twitter-tweet')
-    if (xCards.length === 0) return
+    function loadXCards() {
+      const xCards = document.querySelectorAll('.twitter-tweet')
+      if (xCards.length === 0) return
 
-    if (document.querySelector('script[src*="platform.twitter.com/widgets.js"]')) {
-      window.twttr?.widgets?.load?.()
-      return
+      if (document.querySelector('script[src*="platform.twitter.com/widgets.js"]')) {
+        window.twttr?.widgets?.load?.()
+        return
+      }
+
+      const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+      xCards.forEach((element) => {
+        element.setAttribute('data-theme', isDark ? 'dark' : 'light')
+      })
+
+      const script = document.createElement('script')
+      script.src = 'https://platform.twitter.com/widgets.js'
+      script.async = true
+      document.head.appendChild(script)
     }
 
-    const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-    xCards.forEach((element) => {
-      element.setAttribute('data-theme', isDark ? 'dark' : 'light')
-    })
+    function scheduleXCards() {
+      if (state.setupPending) return
+      state.setupPending = true
+      requestAnimationFrame(() => {
+        state.setupPending = false
+        loadXCards()
+      })
+    }
 
-    const script = document.createElement('script')
-    script.src = 'https://platform.twitter.com/widgets.js'
-    script.async = true
-    document.head.appendChild(script)
-  }
+    window.__scheduleXCards = scheduleXCards
 
-  function scheduleXCards() {
-    if (xCardsSetupPending) return
-    xCardsSetupPending = true
-    requestAnimationFrame(() => {
-      xCardsSetupPending = false
-      loadXCards()
-    })
-  }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', scheduleXCards, { once: true })
+    } else {
+      scheduleXCards()
+    }
 
-  scheduleXCards()
-  document.addEventListener('astro:after-swap', scheduleXCards)
-  document.addEventListener('astro:page-load', scheduleXCards)
-  document.addEventListener('DOMContentLoaded', scheduleXCards)
+    if (!state.installed) {
+      state.installed = true
+      document.addEventListener('astro:after-swap', scheduleXCards)
+      document.addEventListener('astro:page-load', scheduleXCards)
+    }
+  })()
 </script>
 
 <style is:inline>

@@ -8,8 +8,7 @@
   >
     <path
       d="M128 48l-72 72a8 8 0 1011.31 11.31L120 78.63V200a8 8 0 0016 0V78.63l52.69 52.68A8 8 0 10200 120z"
-      fill="currentColor"
-    ></path>
+      fill="currentColor"></path>
   </svg>
   <span class="sr-only">Back to top</span>
 </button>
@@ -81,35 +80,46 @@
   }
 </style>
 
-<script>
-  function setupBackToTop() {
-    const button = document.querySelector<HTMLButtonElement>('.back-to-top')
-    if (!button || button.dataset.bound === 'true') return
-    button.dataset.bound = 'true'
+<script is:inline>
+  ;(function () {
+    const state = (window.__backToTopState ||= {
+      installed: false
+    })
 
-    const syncVisibility = () => {
-      button.classList.toggle('is-visible', window.scrollY > 360)
+    function setupBackToTop() {
+      const button = document.querySelector('.back-to-top')
+      if (!button || button.dataset.bound === 'true') return
+      button.dataset.bound = 'true'
+
+      const syncVisibility = () => {
+        button.classList.toggle('is-visible', window.scrollY > 360)
+      }
+
+      const scrollToTop = () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+      }
+
+      syncVisibility()
+      button.addEventListener('click', scrollToTop)
+      window.addEventListener('scroll', syncVisibility, { passive: true })
+
+      document.addEventListener(
+        'astro:before-swap',
+        () => {
+          button.removeEventListener('click', scrollToTop)
+          window.removeEventListener('scroll', syncVisibility)
+          button.dataset.bound = 'false'
+        },
+        { once: true }
+      )
     }
 
-    const scrollToTop = () => {
-      window.scrollTo({ top: 0, behavior: 'smooth' })
+    window.__setupBackToTop = setupBackToTop
+    setupBackToTop()
+
+    if (!state.installed) {
+      state.installed = true
+      document.addEventListener('astro:page-load', setupBackToTop)
     }
-
-    syncVisibility()
-    button.addEventListener('click', scrollToTop)
-    window.addEventListener('scroll', syncVisibility, { passive: true })
-
-    document.addEventListener(
-      'astro:before-swap',
-      () => {
-        button.removeEventListener('click', scrollToTop)
-        window.removeEventListener('scroll', syncVisibility)
-        button.dataset.bound = 'false'
-      },
-      { once: true }
-    )
-  }
-
-  setupBackToTop()
-  document.addEventListener('astro:page-load', setupBackToTop)
+  })()
 </script>

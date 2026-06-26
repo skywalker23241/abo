@@ -1,295 +1,300 @@
-<script>
-  import type { LinkCardMetadata } from '@/types'
+<script is:inline>
+  ;(function () {
+    const state = (window.__linkCardState ||= {
+      observer: null,
+      setupPending: false,
+      installed: false,
+      metadataCache: new Map()
+    })
 
-  let linkCardsObserver: IntersectionObserver | null = null
-  let linkCardsSetupPending = false
-  const metadataCache = new Map<string, LinkCardMetadata>()
-
-  function resolveUrl(value: string, baseUrl: string): string {
-    if (!value.trim()) {
-      return ''
-    }
-
-    try {
-      return new URL(value, baseUrl).href
-    } catch {
-      return value
-    }
-  }
-
-  function isBlockedMetadata(doc: Document, title: string, description: string, image: string): boolean {
-    const normalizedTitle = title.trim().toLowerCase()
-    if (image || description) {
-      return false
-    }
-
-    return (
-      normalizedTitle === 'just a moment...' ||
-      normalizedTitle === 'just a moment' ||
-      Boolean(doc.querySelector('script[src*="challenges.cloudflare.com"]')) ||
-      doc.documentElement.innerHTML.includes('/cdn-cgi/challenge-platform/')
-    )
-  }
-
-  function getFallbackMetadata(el: HTMLElement): LinkCardMetadata | null {
-    const url = el.dataset.url || window.location.href
-    const metadata = {
-      title: el.dataset.title?.trim() || '',
-      description: el.dataset.description?.trim() || '',
-      image: el.dataset.image ? resolveUrl(el.dataset.image.trim(), url) : '',
-      imageAlt: el.dataset.imageAlt?.trim() || el.dataset.title?.trim() || ''
-    }
-
-    return metadata.title || metadata.description || metadata.image ? metadata : null
-  }
-
-  function mergeMetadata(
-    fallback: LinkCardMetadata | null,
-    fetched: LinkCardMetadata | null
-  ): LinkCardMetadata | null {
-    if (!fallback) {
-      return fetched
-    }
-    if (!fetched) {
-      return fallback
-    }
-
-    return {
-      title: fetched.title || fallback.title,
-      description: fetched.description || fallback.description,
-      image: fetched.image || fallback.image,
-      imageAlt: fetched.imageAlt || fallback.imageAlt
-    }
-  }
-
-  // Fetch metadata from URL using our own proxy API with caching
-  async function fetchLinkMetadata(url: string): Promise<LinkCardMetadata | null> {
-    // Check cache first
-    if (metadataCache.has(url)) {
-      return metadataCache.get(url)!
-    }
-
-    try {
-      // Use our own proxy API
-      const proxyUrl = `/api/proxy?url=${encodeURIComponent(url)}`
-      const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 3000) // 3 second timeout
-
-      const response = await fetch(proxyUrl, {
-        signal: controller.signal
-      })
-
-      clearTimeout(timeoutId)
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch metadata')
+    function resolveUrl(value, baseUrl) {
+      if (!value.trim()) {
+        return ''
       }
 
-      const html = await response.text()
+      try {
+        return new URL(value, baseUrl).href
+      } catch {
+        return value
+      }
+    }
 
-      // Parse HTML to extract metadata
-      const parser = new DOMParser()
-      const doc = parser.parseFromString(html, 'text/html')
+    function isBlockedMetadata(doc, title, description, image) {
+      const normalizedTitle = title.trim().toLowerCase()
+      if (image || description) {
+        return false
+      }
 
-      const title =
-        doc.querySelector('meta[property="og:title"]')?.getAttribute('content') ||
-        doc.querySelector('meta[name="twitter:title"]')?.getAttribute('content') ||
-        doc.querySelector('title')?.textContent ||
-        ''
+      return (
+        normalizedTitle === 'just a moment...' ||
+        normalizedTitle === 'just a moment' ||
+        Boolean(doc.querySelector('script[src*="challenges.cloudflare.com"]')) ||
+        doc.documentElement.innerHTML.includes('/cdn-cgi/challenge-platform/')
+      )
+    }
 
-      const description =
-        doc.querySelector('meta[property="og:description"]')?.getAttribute('content') ||
-        doc.querySelector('meta[name="twitter:description"]')?.getAttribute('content') ||
-        doc.querySelector('meta[name="description"]')?.getAttribute('content') ||
-        ''
+    function getFallbackMetadata(el) {
+      const url = el.dataset.url || window.location.href
+      const metadata = {
+        title: el.dataset.title?.trim() || '',
+        description: el.dataset.description?.trim() || '',
+        image: el.dataset.image ? resolveUrl(el.dataset.image.trim(), url) : '',
+        imageAlt: el.dataset.imageAlt?.trim() || el.dataset.title?.trim() || ''
+      }
 
-      const imageSource =
-        doc.querySelector('meta[property="og:image"]')?.getAttribute('content') ||
-        doc.querySelector('meta[name="twitter:image"]')?.getAttribute('content') ||
-        ''
-      const image = imageSource ? resolveUrl(imageSource, url) : ''
+      return metadata.title || metadata.description || metadata.image ? metadata : null
+    }
 
-      const imageAlt =
-        doc.querySelector('meta[property="og:image:alt"]')?.getAttribute('content') || title || ''
+    function mergeMetadata(fallback, fetched) {
+      if (!fallback) {
+        return fetched
+      }
+      if (!fetched) {
+        return fallback
+      }
 
-      if (isBlockedMetadata(doc, title || '', description || '', image)) {
+      return {
+        title: fetched.title || fallback.title,
+        description: fetched.description || fallback.description,
+        image: fetched.image || fallback.image,
+        imageAlt: fetched.imageAlt || fallback.imageAlt
+      }
+    }
+
+    // Fetch metadata from URL using our own proxy API with caching
+    async function fetchLinkMetadata(url) {
+      // Check cache first
+      if (state.metadataCache.has(url)) {
+        return state.metadataCache.get(url)
+      }
+
+      try {
+        // Use our own proxy API
+        const proxyUrl = `/api/proxy?url=${encodeURIComponent(url)}`
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 3000) // 3 second timeout
+
+        const response = await fetch(proxyUrl, {
+          signal: controller.signal
+        })
+
+        clearTimeout(timeoutId)
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch metadata')
+        }
+
+        const html = await response.text()
+
+        // Parse HTML to extract metadata
+        const parser = new DOMParser()
+        const doc = parser.parseFromString(html, 'text/html')
+
+        const title =
+          doc.querySelector('meta[property="og:title"]')?.getAttribute('content') ||
+          doc.querySelector('meta[name="twitter:title"]')?.getAttribute('content') ||
+          doc.querySelector('title')?.textContent ||
+          ''
+
+        const description =
+          doc.querySelector('meta[property="og:description"]')?.getAttribute('content') ||
+          doc.querySelector('meta[name="twitter:description"]')?.getAttribute('content') ||
+          doc.querySelector('meta[name="description"]')?.getAttribute('content') ||
+          ''
+
+        const imageSource =
+          doc.querySelector('meta[property="og:image"]')?.getAttribute('content') ||
+          doc.querySelector('meta[name="twitter:image"]')?.getAttribute('content') ||
+          ''
+        const image = imageSource ? resolveUrl(imageSource, url) : ''
+
+        const imageAlt =
+          doc.querySelector('meta[property="og:image:alt"]')?.getAttribute('content') || title || ''
+
+        if (isBlockedMetadata(doc, title || '', description || '', image)) {
+          return null
+        }
+
+        const metadata = {
+          title: title?.trim() || '',
+          description: description?.trim() || '',
+          image: image?.trim() || '',
+          imageAlt: imageAlt?.trim() || ''
+        }
+
+        // Cache the result
+        state.metadataCache.set(url, metadata)
+        return metadata
+      } catch {
         return null
       }
-
-      const metadata = {
-        title: title?.trim() || '',
-        description: description?.trim() || '',
-        image: image?.trim() || '',
-        imageAlt: imageAlt?.trim() || ''
-      }
-
-      // Cache the result
-      metadataCache.set(url, metadata)
-      return metadata
-    } catch {
-      return null
-    }
-  }
-
-  // Update link card with fetched metadata
-  async function updateLinkCard(el: HTMLElement) {
-    const url = el.dataset.url
-    if (!url) {
-      return
     }
 
-    try {
-      const fallback = getFallbackMetadata(el)
-      const fallbackTitleElement = el.querySelector('.link-card-title') as HTMLElement
-      const fallbackDescElement = el.querySelector('.link-card-description') as HTMLElement
-      const fallbackImageContainer = el.querySelector('.link-card-image') as HTMLElement
-      const fallbackImageElement = el.querySelector('.link-card-image img') as HTMLImageElement
-
-      if (fallback) {
-        renderLinkCardMetadata(
-          fallback,
-          fallbackTitleElement,
-          fallbackDescElement,
-          fallbackImageContainer,
-          fallbackImageElement
-        )
-      }
-
-      // Fetch and update metadata
-      const metadata = mergeMetadata(fallback, await fetchLinkMetadata(url))
-      if (!metadata) {
+    // Update link card with fetched metadata
+    async function updateLinkCard(el) {
+      const url = el.dataset.url
+      if (!url) {
         return
       }
 
-      const titleElement = el.querySelector('.link-card-title') as HTMLElement
-      const descElement = el.querySelector('.link-card-description') as HTMLElement
-      const imageContainer = el.querySelector('.link-card-image') as HTMLElement
-      const imageElement = el.querySelector('.link-card-image img') as HTMLImageElement
-      renderLinkCardMetadata(metadata, titleElement, descElement, imageContainer, imageElement)
-    } catch {
-      // Handle error silently
-    }
-  }
+      try {
+        const fallback = getFallbackMetadata(el)
+        const fallbackTitleElement = el.querySelector('.link-card-title')
+        const fallbackDescElement = el.querySelector('.link-card-description')
+        const fallbackImageContainer = el.querySelector('.link-card-image')
+        const fallbackImageElement = el.querySelector('.link-card-image img')
 
-  function renderLinkCardMetadata(
-    metadata: LinkCardMetadata,
-    titleElement: HTMLElement | null,
-    descElement: HTMLElement | null,
-    imageContainer: HTMLElement | null,
-    imageElement: HTMLImageElement | null
-  ) {
-    if (titleElement) {
-      if (metadata.title && metadata.title.trim()) {
-        titleElement.textContent = metadata.title
-        titleElement.style.display = 'block'
-      } else {
-        titleElement.style.display = 'none'
+        if (fallback) {
+          renderLinkCardMetadata(
+            fallback,
+            fallbackTitleElement,
+            fallbackDescElement,
+            fallbackImageContainer,
+            fallbackImageElement
+          )
+        }
+
+        // Fetch and update metadata
+        const metadata = mergeMetadata(fallback, await fetchLinkMetadata(url))
+        if (!metadata) {
+          return
+        }
+
+        const titleElement = el.querySelector('.link-card-title')
+        const descElement = el.querySelector('.link-card-description')
+        const imageContainer = el.querySelector('.link-card-image')
+        const imageElement = el.querySelector('.link-card-image img')
+        renderLinkCardMetadata(metadata, titleElement, descElement, imageContainer, imageElement)
+      } catch {
+        // Handle error silently
       }
     }
 
-    if (descElement) {
-      if (metadata.description && metadata.description.trim()) {
-        descElement.textContent = metadata.description
-        descElement.style.display = 'block'
-      } else {
-        descElement.style.display = 'none'
-        descElement.textContent = ''
+    function renderLinkCardMetadata(
+      metadata,
+      titleElement,
+      descElement,
+      imageContainer,
+      imageElement
+    ) {
+      if (titleElement) {
+        if (metadata.title && metadata.title.trim()) {
+          titleElement.textContent = metadata.title
+          titleElement.style.display = 'block'
+        } else {
+          titleElement.style.display = 'none'
+        }
+      }
+
+      if (descElement) {
+        if (metadata.description && metadata.description.trim()) {
+          descElement.textContent = metadata.description
+          descElement.style.display = 'block'
+        } else {
+          descElement.style.display = 'none'
+          descElement.textContent = ''
+        }
+      }
+
+      if (imageContainer && imageElement && metadata.image) {
+        imageElement.src = metadata.image
+        imageElement.alt = metadata.imageAlt
+        imageContainer.style.display = 'block'
       }
     }
 
-    if (imageContainer && imageElement && metadata.image) {
-      imageElement.src = metadata.image
-      imageElement.alt = metadata.imageAlt
-      imageContainer.style.display = 'block'
-    }
-  }
+    // Set up intersection observer for link cards
+    function setupLinkCards() {
+      state.observer?.disconnect()
 
-  // Set up intersection observer for link cards
-  function setupLinkCards() {
-    linkCardsObserver?.disconnect()
+      const linkCards = document.getElementsByClassName('link-card')
+      if (linkCards.length === 0) {
+        return
+      }
 
-    const linkCards = document.getElementsByClassName('link-card')
-    if (linkCards.length === 0) {
-      return
-    }
+      // Create an intersection observer to process link cards when they enter viewport
+      state.observer = new IntersectionObserver(
+        (entries) => {
+          // Process all intersecting cards in parallel
+          const intersectingCards = entries
+            .filter((entry) => entry.isIntersecting)
+            .map((entry) => entry.target)
 
-    // Create an intersection observer to process link cards when they enter viewport
-    linkCardsObserver = new IntersectionObserver(
-      (entries) => {
-        // Process all intersecting cards in parallel
-        const intersectingCards = entries
-          .filter((entry) => entry.isIntersecting)
-          .map((entry) => entry.target as HTMLElement)
-
-        if (intersectingCards.length > 0) {
-          // Update domain names immediately for better perceived performance
-          intersectingCards.forEach((card) => {
-            const url = card.dataset.url
-            if (url) {
-              try {
-                const domain = new URL(url).hostname.replace('www.', '')
-                const urlElement = card.querySelector('.link-card-url')
-                if (urlElement) {
-                  // Keep the SVG icon and update only the text content
-                  const textSpan = urlElement.querySelector('span')
-                  if (textSpan) {
-                    textSpan.textContent = domain
-                  } else {
-                    // Fallback if span doesn't exist
-                    urlElement.innerHTML = `
+          if (intersectingCards.length > 0) {
+            // Update domain names immediately for better perceived performance
+            intersectingCards.forEach((card) => {
+              const url = card.dataset.url
+              if (url) {
+                try {
+                  const domain = new URL(url).hostname.replace('www.', '')
+                  const urlElement = card.querySelector('.link-card-url')
+                  if (urlElement) {
+                    // Keep the SVG icon and update only the text content
+                    const textSpan = urlElement.querySelector('span')
+                    if (textSpan) {
+                      textSpan.textContent = domain
+                    } else {
+                      // Fallback if span doesn't exist
+                      urlElement.innerHTML = `
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor">
                         <path d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"></path>
                       </svg>
                       <span>${domain}</span>
                     `
+                    }
                   }
-                }
-              } catch {
-                const urlElement = card.querySelector('.link-card-url')
-                if (urlElement) {
-                  // Keep the SVG icon and update only the text content
-                  const textSpan = urlElement.querySelector('span')
-                  if (textSpan) {
-                    textSpan.textContent = 'invalid-url'
-                  } else {
-                    // Fallback if span doesn't exist
-                    urlElement.innerHTML = `
+                } catch {
+                  const urlElement = card.querySelector('.link-card-url')
+                  if (urlElement) {
+                    // Keep the SVG icon and update only the text content
+                    const textSpan = urlElement.querySelector('span')
+                    if (textSpan) {
+                      textSpan.textContent = 'invalid-url'
+                    } else {
+                      // Fallback if span doesn't exist
+                      urlElement.innerHTML = `
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor">
                         <path d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"></path>
                       </svg>
                       <span>invalid-url</span>
                     `
+                    }
                   }
                 }
               }
-            }
-          })
+            })
 
-          // Fetch metadata in parallel
-          Promise.allSettled(intersectingCards.map((card) => updateLinkCard(card))).then(() => {
-            // Unobserve all processed cards
-            intersectingCards.forEach((card) => linkCardsObserver?.unobserve(card))
-          })
-        }
-      },
-      { rootMargin: '200px' }
-    )
+            // Fetch metadata in parallel
+            Promise.allSettled(intersectingCards.map((card) => updateLinkCard(card))).then(() => {
+              // Unobserve all processed cards
+              intersectingCards.forEach((card) => state.observer?.unobserve(card))
+            })
+          }
+        },
+        { rootMargin: '200px' }
+      )
 
-    Array.from(linkCards).forEach((card) => linkCardsObserver?.observe(card))
-  }
+      Array.from(linkCards).forEach((card) => state.observer?.observe(card))
+    }
 
-  function scheduleLinkCardsSetup() {
-    if (linkCardsSetupPending) return
-    linkCardsSetupPending = true
-    requestAnimationFrame(() => {
-      linkCardsSetupPending = false
-      setupLinkCards()
-    })
-  }
+    function scheduleLinkCardsSetup() {
+      if (state.setupPending) return
+      state.setupPending = true
+      requestAnimationFrame(() => {
+        state.setupPending = false
+        setupLinkCards()
+      })
+    }
 
-  scheduleLinkCardsSetup()
-  document.addEventListener('astro:after-swap', scheduleLinkCardsSetup)
-  document.addEventListener('astro:page-load', scheduleLinkCardsSetup)
+    window.__scheduleLinkCardsSetup = scheduleLinkCardsSetup
+    scheduleLinkCardsSetup()
+
+    if (!state.installed) {
+      state.installed = true
+      document.addEventListener('astro:after-swap', scheduleLinkCardsSetup)
+      document.addEventListener('astro:page-load', scheduleLinkCardsSetup)
+    }
+  })()
 </script>
 
 <style is:inline>

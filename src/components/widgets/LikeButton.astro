@@ -136,59 +136,72 @@ const { slug } = Astro.props
   }
 </style>
 
-<script>
-  function initLikeWidgets() {
-    const widgets = document.querySelectorAll<HTMLElement>('.like-widget[data-like-slug]')
-    widgets.forEach((widget) => {
-      if (widget.dataset.likeInit === '1') return
-      widget.dataset.likeInit = '1'
-
-      const slug = widget.dataset.likeSlug
-      if (!slug) return
-
-      const button = widget.querySelector<HTMLButtonElement>('.like-button')
-      const countEl = widget.querySelector<HTMLElement>('.like-count')
-      if (!button || !countEl) return
-
-      const storageKey = `post-liked:${slug}`
-      const liked = localStorage.getItem(storageKey) === '1'
-      if (liked) button.classList.add('is-liked')
-
-      const render = (count: number) => {
-        countEl.textContent = count > 0 ? String(count) : '·'
-      }
-
-      fetch(`/api/like?slug=${encodeURIComponent(slug)}`)
-        .then((r) => (r.ok ? r.json() : null))
-        .then((data) => {
-          if (data && typeof data.count === 'number') render(data.count)
-        })
-        .catch(() => {})
-
-      button.addEventListener('click', async () => {
-        if (button.classList.contains('is-liked') || button.classList.contains('is-loading')) return
-        button.classList.add('is-loading')
-        try {
-          const res = await fetch('/api/like', {
-            method: 'POST',
-            headers: { 'content-type': 'application/json' },
-            body: JSON.stringify({ slug })
-          })
-          if (!res.ok) throw new Error('like failed')
-          const data = await res.json()
-          if (typeof data?.count === 'number') render(data.count)
-          localStorage.setItem(storageKey, '1')
-          button.classList.add('is-liked')
-        } catch {
-          // silent failure — user can retry
-        } finally {
-          button.classList.remove('is-loading')
-        }
-      })
+<script is:inline>
+  ;(function () {
+    const state = (window.__likeButtonState ||= {
+      installed: false
     })
-  }
 
-  if (document.readyState !== 'loading') initLikeWidgets()
-  else document.addEventListener('DOMContentLoaded', initLikeWidgets, { once: true })
-  document.addEventListener('astro:page-load', initLikeWidgets)
+    function initLikeWidgets() {
+      const widgets = document.querySelectorAll('.like-widget[data-like-slug]')
+      widgets.forEach((widget) => {
+        if (widget.dataset.likeInit === '1') return
+        widget.dataset.likeInit = '1'
+
+        const slug = widget.dataset.likeSlug
+        if (!slug) return
+
+        const button = widget.querySelector('.like-button')
+        const countEl = widget.querySelector('.like-count')
+        if (!button || !countEl) return
+
+        const storageKey = `post-liked:${slug}`
+        const liked = localStorage.getItem(storageKey) === '1'
+        if (liked) button.classList.add('is-liked')
+
+        const render = (count) => {
+          countEl.textContent = count > 0 ? String(count) : '·'
+        }
+
+        fetch(`/api/like?slug=${encodeURIComponent(slug)}`)
+          .then((r) => (r.ok ? r.json() : null))
+          .then((data) => {
+            if (data && typeof data.count === 'number') render(data.count)
+          })
+          .catch(() => {})
+
+        button.addEventListener('click', async () => {
+          if (button.classList.contains('is-liked') || button.classList.contains('is-loading'))
+            return
+          button.classList.add('is-loading')
+          try {
+            const res = await fetch('/api/like', {
+              method: 'POST',
+              headers: { 'content-type': 'application/json' },
+              body: JSON.stringify({ slug })
+            })
+            if (!res.ok) throw new Error('like failed')
+            const data = await res.json()
+            if (typeof data?.count === 'number') render(data.count)
+            localStorage.setItem(storageKey, '1')
+            button.classList.add('is-liked')
+          } catch {
+            // silent failure — user can retry
+          } finally {
+            button.classList.remove('is-loading')
+          }
+        })
+      })
+    }
+
+    window.__initLikeWidgets = initLikeWidgets
+
+    if (document.readyState !== 'loading') initLikeWidgets()
+    else document.addEventListener('DOMContentLoaded', initLikeWidgets, { once: true })
+
+    if (!state.installed) {
+      state.installed = true
+      document.addEventListener('astro:page-load', initLikeWidgets)
+    }
+  })()
 </script>
