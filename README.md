@@ -6,13 +6,13 @@
 
 <p align="center">
   <a href="https://jackcooper.qzz.io/">
-    <img src="https://img.shields.io/badge/Live%20Site-jackcooper.qzz.io-111111?style=for-the-badge" alt="Live Site" />
+    <img src="https://img.shields.io/badge/live_site-jackcooper.qzz.io-111111?style=flat-square" alt="Live Site" />
   </a>
   <a href="https://app.netlify.com/projects/cooper2/deploys">
     <img src="https://api.netlify.com/api/v1/badges/795b04bd-4bea-448a-b58c-e76690049fb3/deploy-status" alt="Netlify Status" />
   </a>
   <a href="https://hopp.bio/junbo-le">
-    <img src="https://img.shields.io/badge/Find%20me-if%20you%20like%20%E2%9D%A4-111111?style=for-the-badge" alt="Find me" />
+    <img src="https://img.shields.io/badge/find_me-if_you_like_%E2%9D%A4-111111?style=flat-square" alt="Find me" />
   </a>
 </p>
 
@@ -136,7 +136,7 @@ This project is actively maintained as my personal blog base. The design and str
 
 <p align="left">
   <a href="https://hopp.bio/junbo-le">
-    <img src="https://img.shields.io/badge/Find%20me-if%20you%20like%20%E2%9D%A4-111111?style=for-the-badge" alt="Find me" />
+    <img src="https://img.shields.io/badge/find_me-if_you_like_%E2%9D%A4-111111?style=flat-square" alt="Find me" />
   </a>
 </p>
 
